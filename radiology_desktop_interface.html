@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical AI Hub</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* Light gray background */
+            min-height: 100vh;
+        }
+        /* Custom scrollbar for better appearance */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .chat-container {
+            height: calc(100vh - 200px); /* Adjust height for form and padding */
+            overflow-y: auto;
+        }
+        .draft-container {
+            min-height: 400px;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1e40af',
+                        'secondary-gray': '#4b5563',
+                        'accent-teal': '#14b8a6',
+                        'accent-purple': '#8b5cf6', /* New color for drafting */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex bg-gray-50 text-gray-800">
+
+<!-- Main Application Script -->
+<script type="module">
+    // --- Firebase Imports (Keeping Auth for User ID Display) ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // ====================================================================
+    // --- INTERNAL DEPLOYMENT: MANDATORY CONFIGURATION CHANGES ---
+    // 1. Hardcoded Configuration: REPLACE THESE PLACEHOLDERS
+    const appId = 'your-internal-app-id'; // Use a fixed identifier for your app's public data
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4R5CTCwnRDeysuIiAYDAdXjijtYvvthI",          // <<< MUST BE REPLACED
+        authDomain: "medicalai-243c1.firebaseapp.com", // <<< MUST BE REPLACED
+        projectId: "medicalai-243c1",         // <<< MUST BE REPLACED
+        storageBucket: "medicalai-243c1.firebasestorage.app",
+        messagingSenderId: "276890625835",
+        appId: "1:276890625835:web:367a55c60d8c649dc3076e",
+    };
+    
+    // 2. Gemini API Key Security: For internal security, DO NOT expose this key.
+    // **RECOMMENDATION: Use a secure backend proxy to call the Gemini API.**
+    // If you must use a client-side key for testing, replace the empty string below.
+    const GEMINI_API_KEY = "AIzaSyA0yEml30Y1NItvJ5hZoLKi0EnMTLIgNng";
+    // ====================================================================
+
+
+    // --- Application State ---
+    const state = {
+        currentModule: 'AIImageAnalysis',
+        db: null,
+        auth: null,
+        userId: null,
+        isAuthReady: false,
+        
+        // Knowledge Base State
+        kbQuery: '',
+        kbResult: null,
+        kbIsLoading: false,
+
+        // AI Image Analysis State
+        aiImagePrompt: 'Analyze the following image for radiological findings. Provide a structured JSON output with fields "impression", "findings", and "recommendations".',
+        aiImageBase64: null,
+        aiImageLoading: false,
+        aiImageResult: null,
+        
+        // TTS State
+        ttsLoading: false, 
+        isPlayingAudio: false,
+        currentAudio: null,
+
+        // General Doctor AI Chat State
+        chatHistory: [],
+        chatInput: '',
+        chatIsLoading: false,
+
+        // NEW: Communication Draft State
+        draftInput: '',
+        draftResult: null,
+        draftLoading: false,
+        draftType: 'patient', // 'patient' or 'referral'
+    };
+
+    // --- Utility Functions ---
+
+    /**
+     * Exponential backoff utility for API calls.
+     * @param {Function} fn The function to execute.
+     * @param {number} maxRetries Maximum number of retries.
+     * @returns {Promise<any>}
+     */
+    async function retryWithBackoff(fn, maxRetries = 5) {
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                return await fn();
+            } catch (error) {
+                if (attempt === maxRetries - 1) {
+                    throw error;
+                }
+                const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+
+    /** TTS Utility Functions (base64ToArrayBuffer, writeString, pcmToWav, stopTTSPlayback) **/
+    function base64ToArrayBuffer(base64) {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    function pcmToWav(samples, sampleRate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+        let offset = 0;
+
+        writeString(view, offset, 'RIFF'); offset += 4;
+        view.setUint32(offset, 36 + samples.length * 2, true); offset += 4;
+        writeString(view, offset, 'WAVE'); offset += 4;
+        writeString(view, offset, 'fmt '); offset += 4;
+        view.setUint32(offset, 16, true); offset += 4;
+        view.setUint16(offset, 1, true); offset += 2;
+        view.setUint16(offset, 1, true); offset += 2;
+        view.setUint32(offset, sampleRate, true); offset += 4;
+        view.setUint32(offset, sampleRate * 2, true); offset += 4;
+        view.setUint16(offset, 2, true); offset += 2;
+        view.setUint16(offset, 16, true); offset += 2;
+        writeString(view, offset, 'data'); offset += 4;
+        view.setUint32(offset, samples.length * 2, true); offset += 4;
+
+        samples.forEach(sample => {
+            view.setInt16(offset, sample, true);
+            offset += 2;
+        });
+
+        return new Blob([view], { type: 'audio/wav' });
+    }
+
+    function stopTTSPlayback(shouldRender = true) {
+        if (state.currentAudio) {
+            const audioUrl = state.currentAudio.src;
+            state.currentAudio.pause();
+            state.currentAudio.currentTime = 0;
+            state.currentAudio = null;
+            if (audioUrl && audioUrl.startsWith('blob:')) {
+                 URL.revokeObjectURL(audioUrl);
+            }
+            state.isPlayingAudio = false;
+            state.ttsLoading = false;
+            if (shouldRender) {
+                render();
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Handles image file upload and stores base64 data.
+     */
+    async function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            state.aiImageBase64 = null;
+            state.aiImageResult = null;
+            render();
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('aiImagePreview').src = e.target.result;
+            document.getElementById('aiImagePreview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+
+        try {
+            state.aiImageBase64 = await fileToBase64(file);
+        } catch (error) {
+            console.error("Error reading file:", error);
+            state.aiImageBase64 = null;
+        }
+        state.aiImageResult = null;
+        render();
+    }
+
+
+    /**
+     * Base64 conversion for file uploads (AI Image Analysis).
+     * @param {File} file
+     * @returns {Promise<string>}
+     */
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /**
+     * Updates the application state and re-renders the UI.
+     */
+    function render() {
+        // Render Active Module
+        document.getElementById('content-area').innerHTML = renderModule();
+
+        // Render Sidebar
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('bg-primary-blue', 'text-white');
+            item.classList.add('hover:bg-gray-100', 'text-gray-600');
+            if (item.dataset.module === state.currentModule) {
+                item.classList.add('bg-primary-blue', 'text-white');
+                item.classList.remove('hover:bg-gray-100', 'text-gray-600');
+            }
+        });
+
+        // Render Auth/User Status
+        const userStatusEl = document.getElementById('user-status');
+        if (state.isAuthReady) {
+            userStatusEl.innerHTML = `
+                <div class="text-xs text-gray-500 mb-1">Authenticated User ID:</div>
+                <div class="truncate font-mono text-xs text-primary-blue bg-blue-50 p-1 rounded-md">
+                    ${state.userId || 'N/A (Anonymity)'}
+                </div>
+            `;
+        } else {
+            userStatusEl.innerHTML = `
+                <div class="text-xs text-gray-500">Initializing Firebase...</div>
+            `;
+        }
+
+        // Setup event listeners for the new content
+        setupModuleListeners();
+    }
+
+    // --- Firebase and Auth Initialization for Internal Deployment ---
+    async function initializeFirebase() {
+        if (!Object.keys(firebaseConfig).length || !firebaseConfig.projectId.startsWith('your')) {
+            console.error("Firebase configuration is missing or using placeholder values. Please update `firebaseConfig`.");
+            return;
+        }
+        try {
+            const app = initializeApp(firebaseConfig);
+            state.db = getFirestore(app);
+            state.auth = getAuth(app);
+            setLogLevel('debug');
+
+            // --- IMPORTANT: Placeholder Authentication ---
+            // In a production internal environment, replace this with a sign-in
+            // that links to your domain identity provider (e.g., SSO).
+            await signInAnonymously(state.auth);
+            // ---------------------------------------------
+
+            // Set up Auth State Listener
+            onAuthStateChanged(state.auth, (user) => {
+                if (user) {
+                    state.userId = user.uid;
+                } else {
+                    // Fallback to a random UUID if anonymous sign-in fails
+                    state.userId = crypto.randomUUID(); 
+                }
+                state.isAuthReady = true;
+                render();
+            });
+
+        } catch (error) {
+            console.error("Error initializing or authenticating Firebase:", error);
+            state.isAuthReady = true; 
+            render();
+        }
+    }
+
+    // --- LLM API Logic (Existing KB, Chat, VLM, TTS) ---
+
+    async function handleKBQuery(event) {
+        event.preventDefault();
+        const queryText = state.kbQuery.trim();
+        if (!queryText) return;
+
+        state.kbIsLoading = true;
+        state.kbResult = null;
+        render();
+
+        const systemPrompt = "You are a specialized medical knowledge assistant. Provide a clear, concise, and academically sound answer based on the search results provided. Do not invent information. Format the response for easy clinical reference.";
+        const userQuery = queryText;
+        // NOTE: If using a backend proxy, change this apiUrl to your proxy endpoint
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            tools: [{ "google_search": {} }],
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+        };
+
+        try {
+            const response = await retryWithBackoff(async () => {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res;
+            });
+
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                const text = candidate.content.parts[0].text;
+                let sources = [];
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    sources = groundingMetadata.groundingAttributions
+                        .map(attribution => ({
+                            uri: attribution.web?.uri,
+                            title: attribution.web?.title,
+                        }))
+                        .filter(source => source.uri && source.title);
+                }
+                state.kbResult = { text, sources };
+            } else {
+                state.kbResult = { text: "No results found or error processing the model response.", sources: [] };
+            }
+        } catch (error) {
+            console.error("Gemini KB API call failed:", error);
+            state.kbResult = { text: `Error retrieving knowledge: ${error.message}`, sources: [] };
+        } finally {
+            state.kbIsLoading = false;
+            render();
+        }
+    }
+    
+    async function handleChatQuery(event) {
+        event.preventDefault();
+        
+        // FIX: Read input directly from the DOM element
+        const chatInputEl = document.getElementById('chat-input');
+        const queryText = chatInputEl ? chatInputEl.value.trim() : state.chatInput.trim();
+        
+        if (!queryText) return;
+
+        state.chatHistory.push({ role: 'user', parts: [{ text: queryText }] });
+        state.chatInput = ''; // Clear the state
+        chatInputEl.value = ''; // Manually clear the input field in the DOM
+        
+        state.chatIsLoading = true;
+        render();
+        
+        setTimeout(() => {
+            const container = document.getElementById('chat-messages');
+            if (container) container.scrollTop = container.scrollHeight;
+        }, 0);
+
+
+        const systemPrompt = "You are a friendly and professional General Practitioner (GP) AI assistant named 'Dr. Omni'. Provide helpful, accurate, and easy-to-understand medical information based on current knowledge. Always advise the user to consult a human doctor for definitive diagnosis and treatment. Do not provide diagnostic results or prescribe treatment. Limit your response to health information and general medical advice.";
+        // NOTE: If using a backend proxy, change this apiUrl to your proxy endpoint
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+        const chatHistoryForAPI = state.chatHistory.slice(-10);
+        
+        const payload = {
+            contents: chatHistoryForAPI,
+            tools: [{ "google_search": {} }],
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+        };
+
+        try {
+            const response = await retryWithBackoff(async () => {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res;
+            });
+
+            const result = await response.json();
+            const modelResponseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (modelResponseText) {
+                state.chatHistory.push({ role: 'model', parts: [{ text: modelResponseText }] });
+            } else {
+                state.chatHistory.push({ role: 'model', parts: [{ text: "Sorry, I couldn't process that request right now. Please try again." }] });
+            }
+        } catch (error) {
+            console.error("Gemini Chat API call failed:", error);
+            state.chatHistory.push({ role: 'model', parts: [{ text: `A network error occurred: ${error.message}` }] });
+        } finally {
+            state.chatIsLoading = false;
+            render();
+            setTimeout(() => {
+                const container = document.getElementById('chat-messages');
+                if (container) container.scrollTop = container.scrollHeight;
+            }, 0);
+        }
+    }
+
+    async function handleAIImageAnalysis() {
+        if (!state.aiImageBase64) {
+            console.error("Please upload an image first.");
+            return;
+        }
+
+        state.aiImageLoading = true;
+        state.aiImageResult = null;
+        render();
+
+        const systemPrompt = "You are a highly specialized radiology assistant. Analyze the uploaded medical image based on the user's prompt. Generate a structured radiological report strictly in JSON format. The findings should be specific and clinical. The impression should be concise. The full_report_text should combine all three fields into a single, cohesive paragraph for text-to-speech output.";
+        const userQuery = state.aiImagePrompt;
+        // NOTE: If using a backend proxy, change this apiUrl to your proxy endpoint
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+
+        const responseSchema = {
+            type: "OBJECT",
+            properties: {
+                "impression": { "type": "STRING", "description": "The final diagnostic impression or conclusion." },
+                "findings": { "type": "STRING", "description": "Detailed, specific radiological findings." },
+                "recommendations": { "type": "STRING", "description": "Clinical recommendations or follow-up suggestions." },
+                "full_report_text": { "type": "STRING", "description": "The combined text of Impression, Findings, and Recommendations for TTS." }
+            },
+            propertyOrdering: ["impression", "findings", "recommendations", "full_report_text"]
+        };
+
+        const payload = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: userQuery },
+                        {
+                            inlineData: {
+                                mimeType: "image/png",
+                                data: state.aiImageBase64
+                            }
+                        }
+                    ]
+                }
+            ],
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema
+            }
+        };
+
+        try {
+            const response = await retryWithBackoff(async () => {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res;
+            });
+
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                const jsonText = candidate.content.parts[0].text;
+                try {
+                    const parsedJson = JSON.parse(jsonText);
+                    state.aiImageResult = parsedJson;
+                } catch (e) {
+                    console.error("Failed to parse JSON response:", e, jsonText);
+                    state.aiImageResult = {
+                        impression: "Error: AI response was not valid JSON.",
+                        findings: jsonText,
+                        recommendations: "Please try a different prompt.",
+                        full_report_text: "AI response error. Failed to generate a structured report."
+                    };
+                }
+            } else {
+                state.aiImageResult = {
+                    impression: "Analysis Failed.",
+                    findings: "Could not retrieve a valid response from the AI model.",
+                    recommendations: "Check the image and prompt, or try again.",
+                    full_report_text: "Analysis failed. Please try again."
+                };
+            }
+        } catch (error) {
+            console.error("Gemini Image Analysis API call failed:", error);
+            state.aiImageResult = {
+                impression: "System Error.",
+                findings: `API Request failed: ${error.message}`,
+                recommendations: "Check console for details.",
+                full_report_text: "A critical system error occurred during analysis."
+            };
+        } finally {
+            state.aiImageLoading = false;
+            render();
+        }
+    }
+
+    async function handleTTSGeneration(textToSpeak) {
+        if (!textToSpeak) return;
+
+        stopTTSPlayback(false);
+
+        state.ttsLoading = true;
+        render();
+
+        const voiceName = "Kore";
+        const prompt = `Say in a clear, measured, and professional tone for a medical report: "${textToSpeak}"`;
+        // NOTE: If using a backend proxy, change this apiUrl to your proxy endpoint
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_API_KEY}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseModalities: ["AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: voiceName }
+                    }
+                }
+            },
+            model: "gemini-2.5-flash-preview-tts"
+        };
+
+        try {
+            const response = await retryWithBackoff(async () => {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res;
+            });
+
+            const result = await response.json();
+            const part = result?.candidates?.[0]?.content?.parts?.[0];
+            const audioData = part?.inlineData?.data;
+            const mimeType = part?.inlineData?.mimeType;
+
+            if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData);
+                const wavBlob = pcmToWav(pcm16, sampleRate);
+                const audioUrl = URL.createObjectURL(wavBlob);
+
+                const audio = new Audio(audioUrl);
+                state.currentAudio = audio;
+                state.ttsLoading = false;
+                state.isPlayingAudio = true;
+
+                audio.play();
+                render();
+
+                const cleanup = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    state.currentAudio = null;
+                    state.isPlayingAudio = false;
+                    state.ttsLoading = false;
+                    render();
+                };
+
+                audio.onended = cleanup;
+                audio.onerror = (e) => {
+                    console.error("Audio playback error:", e);
+                    cleanup();
+                };
+
+            } else {
+                console.error("Invalid TTS response structure or mime type:", mimeType, result);
+                state.ttsLoading = false;
+                state.isPlayingAudio = false;
+                render();
+            }
+        } catch (error) {
+            console.error("Gemini TTS API call failed:", error);
+            state.ttsLoading = false;
+            state.isPlayingAudio = false;
+            render();
+        }
+    }
+
+
+    // --- Communication Drafting LLM Logic ---
+
+    async function handleCommunicationDraft() {
+        const textToDraft = state.draftInput.trim();
+        if (!textToDraft) return;
+
+        state.draftLoading = true;
+        state.draftResult = null;
+        render();
+
+        const isPatientDraft = state.draftType === 'patient';
+        // NOTE: If using a backend proxy, change this apiUrl to your proxy endpoint
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+        let systemPrompt;
+        let payload;
+
+        if (isPatientDraft) {
+            // Patient-Friendly Explanation (Standard Text Generation)
+            systemPrompt = "You are an empathetic medical communicator. Rewrite the following complex medical findings, which may contain jargon, into simple, reassuring, and easy-to-understand language for a patient. Maintain accuracy while simplifying the language and tone. Start with a warm greeting.";
+            
+            payload = {
+                contents: [{ parts: [{ text: `Original medical text: ${textToDraft}` }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+        } else {
+            // Referral Summary Draft (Structured JSON Generation)
+            systemPrompt = "You are a professional medical scribe drafting a referral summary. Convert the following full medical report text into a concise, professional, structured summary strictly in JSON format. The summary must be brief, highlighting only critical points for a specialist.";
+
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    "reason_for_referral": { "type": "STRING", "description": "A one-sentence summary of the main problem." },
+                    "key_radiological_findings": { "type": "STRING", "description": "The most significant finding from the report." },
+                    "recommended_action": { "type": "STRING", "description": "Specific next steps (e.g., 'Consultation with Orthopedic Surgeon', 'Biopsy required')." }
+                },
+                propertyOrdering: ["reason_for_referral", "key_radiological_findings", "recommended_action"]
+            };
+
+            payload = {
+                contents: [{ parts: [{ text: `Full medical report: ${textToDraft}` }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema
+                }
+            };
+        }
+
+        try {
+            const response = await retryWithBackoff(async () => {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res;
+            });
+
+            const result = await response.json();
+            const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (responseText) {
+                if (isPatientDraft) {
+                    state.draftResult = { type: 'text', content: responseText };
+                } else {
+                    try {
+                        const parsedJson = JSON.parse(responseText);
+                        state.draftResult = { type: 'json', content: parsedJson };
+                    } catch (e) {
+                        console.error("Failed to parse JSON for referral draft:", e, responseText);
+                        state.draftResult = { type: 'text', content: `Error: Failed to parse structured JSON. Raw text received: ${responseText}` };
+                    }
+                }
+            } else {
+                state.draftResult = { type: 'text', content: `Drafting Failed: Could not retrieve a valid response from the AI model.` };
+            }
+        } catch (error) {
+            console.error("Gemini Drafting API call failed:", error);
+            state.draftResult = { type: 'text', content: `System Error: API Request failed during drafting: ${error.message}` };
+        } finally {
+            state.draftLoading = false;
+            render();
+        }
+    }
+
+
+    // --- Module Rendering ---
+
+    function renderModule() {
+        switch (state.currentModule) {
+            case 'AIImageAnalysis':
+                return renderAIImageAnalysis();
+            case 'KnowledgeBase':
+                return renderKnowledgeBase();
+            case 'GeneralDoctorAI':
+                return renderGeneralDoctorAI();
+            case 'CommunicationDrafting': 
+                return renderCommunicationDrafting();
+            default:
+                return `<div class="p-6 text-xl font-semibold text-gray-500">Select a module from the sidebar.</div>`;
+        }
+    }
+
+    function renderAIImageAnalysis() {
+        const result = state.aiImageResult;
+        const buttonDisabled = state.aiImageLoading || state.ttsLoading;
+
+        return `
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">AI Image Analysis</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Image Upload & Preview -->
+                <div class="bg-white p-6 rounded-lg shadow-md h-full">
+                    <h3 class="text-xl font-semibold mb-4 text-primary-blue">Image Input</h3>
+                    <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4">
+                        <label for="image-upload" class="cursor-pointer bg-accent-teal text-white py-2 px-4 rounded-lg shadow hover:bg-teal-600 transition duration-150">
+                            ${state.aiImageBase64 ? 'Change Image' : 'Upload Image (X-Ray, CT, etc.)'}
+                        </label>
+                        <input type="file" id="image-upload" accept="image/*" class="hidden">
+                        <img id="aiImagePreview" src="#" alt="Image Preview" class="${state.aiImageBase64 ? '' : 'hidden'} mt-4 max-w-full h-auto max-h-64 rounded-lg object-contain">
+                    </div>
+                    <textarea id="ai-prompt" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-blue focus:border-primary-blue" rows="3" placeholder="Enter specific analysis prompt (e.g., 'Find all fractures in the wrist').">${state.aiImagePrompt}</textarea>
+                    <button id="analyze-image-btn" class="mt-4 w-full bg-primary-blue text-white py-2 rounded-lg shadow-md hover:bg-blue-800 transition duration-150 flex items-center justify-center ${state.aiImageLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${state.aiImageLoading ? 'disabled' : ''}>
+                        ${state.aiImageLoading ? '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Analyzing...' : 'Run AI Analysis ✨'}
+                    </button>
+                </div>
+
+                <!-- Analysis Results -->
+                <div class="bg-white p-6 rounded-lg shadow-md h-full">
+                    <h3 class="text-xl font-semibold mb-4 text-primary-blue">Structured Report & Voice Output</h3>
+                    ${state.aiImageLoading ? `
+                        <div class="flex flex-col items-center justify-center h-48 text-gray-500">
+                            <svg class="animate-spin h-10 w-10 text-primary-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <p class="mt-4">Generating structured report with Gemini VLM...</p>
+                        </div>
+                    ` : result ? `
+                        <div class="space-y-4">
+                            <!-- Impression -->
+                            <div>
+                                <h4 class="font-bold text-lg text-red-600">Impression</h4>
+                                <p class="bg-red-50 p-3 rounded-md border border-red-200 whitespace-pre-wrap">${result.impression}</p>
+                            </div>
+                            <!-- Findings -->
+                            <div>
+                                <h4 class="font-bold text-lg text-green-600">Findings</h4>
+                                <p class="bg-green-50 p-3 rounded-md border border-green-200 whitespace-pre-wrap">${result.findings}</p>
+                            </div>
+                            <!-- Recommendations -->
+                            <div>
+                                <h4 class="font-bold text-lg text-secondary-gray">Recommendations</h4>
+                                <p class="bg-gray-100 p-3 rounded-md border border-gray-200 whitespace-pre-wrap">${result.recommendations}</p>
+                            </div>
+                            <!-- Full Report & Voice -->
+                            <div class="pt-4 border-t mt-4">
+                                <h4 class="font-bold text-lg text-primary-blue">Full Report Text (for Dictation)</h4>
+                                <textarea readonly class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm" rows="5">${result.full_report_text}</textarea>
+                                <button id="play-tts-btn" class="mt-2 w-full text-white py-2 rounded-lg shadow-md transition duration-150 flex items-center justify-center 
+                                    ${state.ttsLoading ? 'opacity-75 cursor-not-allowed' : ''}
+                                    ${state.isPlayingAudio ? 'bg-red-600 hover:bg-red-700' : 'bg-accent-teal hover:bg-teal-600'}
+                                " ${buttonDisabled ? 'disabled' : ''} data-report-text="${result.full_report_text}">
+                                    ${state.ttsLoading ? `
+                                        <svg class="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating Audio...
+                                    ` : state.isPlayingAudio ? `
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 inline-block mr-2">
+                                            <path fill-rule="evenodd" d="M4.5 7.5a3 3 0 013-3h9a3 3 0 013 3v9a3 3 0 01-3 3h-9a3 3 0 01-3-3v-9z" clip-rule="evenodd" />
+                                        </svg>
+                                        Stop Voice Report
+                                    ` : `
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 inline-block mr-2">
+                                            <path d="M13.5 4.06c0-1.336-1.616-2.005-2.582-1.06L7.5 7.52v.479L3.71 4.79c-1.67-.99-3.715.424-3.71 2.302V17.02c.005 1.878 2.049 3.292 3.71 2.302l3.79-3.208v.479l3.418 4.52c.966.945 2.582.276 2.582-1.06V4.06z"></path>
+                                        </svg>
+                                        Play Voice Report ✨
+                                    `}
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="h-full flex items-center justify-center text-gray-400">
+                            Upload an image and click "Run AI Analysis" to generate a structured radiological report.
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderKnowledgeBase() {
+        const result = state.kbResult;
+
+        return `
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Medical Knowledge Base</h2>
+
+            <!-- Query Form -->
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-primary-blue">Ask a Clinical Question ✨</h3>
+                <form id="kb-form" class="flex gap-4">
+                    <input type="text" id="kb-query-input" value="${state.kbQuery}" class="flex-grow rounded-md border-gray-300 shadow-sm p-3 border focus:ring-primary-blue focus:border-primary-blue" placeholder="e.g., What are the current guidelines for low-dose CT lung screening?">
+                    <button type="submit" class="bg-primary-blue text-white py-3 px-6 rounded-md shadow-md hover:bg-blue-800 transition duration-150 flex items-center justify-center" ${state.kbIsLoading ? 'disabled' : ''}>
+                        ${state.kbIsLoading ? '<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' : 'Search'}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Display -->
+            <div class="bg-white p-6 rounded-lg shadow-md min-h-64">
+                <h3 class="text-xl font-semibold mb-4 text-primary-blue">Results</h3>
+                ${state.kbIsLoading ? `
+                    <div class="flex flex-col items-center justify-center h-48 text-gray-500">
+                        <svg class="animate-bounce h-8 w-8 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="mt-4">Consulting the Knowledge Base...</p>
+                    </div>
+                ` : result ? `
+                    <div class="mb-6 whitespace-pre-wrap text-lg leading-relaxed text-gray-700">
+                        ${result.text}
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-2">Sources Grounding</h4>
+                        ${result.sources.length > 0 ? `
+                            <ul class="space-y-1 text-sm text-gray-500">
+                                ${result.sources.map(source => `
+                                    <li class="flex items-start">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mt-1 mr-2 flex-shrink-0 text-accent-teal">
+                                            <path fill-rule="evenodd" d="M12.5 5a2.5 2.5 0 100 5h-5a2.5 2.5 0 100 5h5a2.5 2.5 0 100-5h-5a2.5 2.5 0 000-5zM4 12.5a.5.5 0 01.5-.5h.75a.5.5 0 010 1h-.75a.5.5 0 01-.5-.5zM4 7.5a.5.5 0 01.5-.5h.75a.5.5 0 010 1H4.5a.5.5 0 01-.5-.5z" clip-rule="evenodd" />
+                                        </svg>
+                                        <a href="${source.uri}" target="_blank" class="hover:underline">${source.title}</a>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : '<p class="text-sm italic text-gray-400">No external sources were cited for this query.</p>'}
+                    </div>
+                ` : `
+                    <div class="h-full flex items-center justify-center text-gray-400">
+                        Enter a clinical question and press Search to find information using Google's real-time grounding.
+                    </div>
+                `}
+            </div>
+        `;
+    }
+
+    function renderGeneralDoctorAI() {
+        return `
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">General AI Doctor Assistance</h2>
+            <div class="flex flex-col h-[calc(100vh-140px)] bg-white rounded-lg shadow-md">
+                
+                <!-- Chat History Window -->
+                <div id="chat-messages" class="chat-container flex-grow p-6 space-y-4">
+                    ${state.chatHistory.length === 0 ? `
+                        <div class="flex items-center justify-center h-full text-gray-400 text-center">
+                            Welcome! Ask **Dr. Omni** any general medical questions you have.
+                            <br>
+                            *Disclaimer: I provide information, not medical advice. Consult a human doctor for diagnosis.*
+                        </div>
+                    ` : state.chatHistory.map(message => `
+                        <div class="flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}">
+                            <div class="max-w-3/4 p-4 rounded-xl shadow-sm ${message.role === 'user' ? 'bg-primary-blue text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200'}">
+                                <p class="font-semibold text-sm mb-1">${message.role === 'user' ? 'You' : 'Dr. Omni'}</p>
+                                <p class="whitespace-pre-wrap">${message.parts[0].text}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+
+                    ${state.chatIsLoading ? `
+                        <div class="flex justify-start">
+                            <div class="max-w-3/4 p-4 rounded-xl bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200 flex items-center">
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-primary-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                Dr. Omni is typing...
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chat-form" class="flex-shrink-0 p-4 border-t border-gray-200">
+                    <div class="flex gap-3">
+                        <input type="text" id="chat-input" value="${state.chatInput}" class="flex-grow rounded-full border-gray-300 shadow-inner p-3 border focus:ring-primary-blue focus:border-primary-blue" placeholder="Ask Dr. Omni a general medical question...">
+                        <button type="submit" class="bg-accent-teal text-white py-2 px-6 rounded-full shadow-md hover:bg-teal-600 transition duration-150 flex items-center justify-center font-semibold" ${state.chatIsLoading || !state.chatInput.trim() ? 'disabled' : ''}>
+                            Send
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 ml-2">
+                                <path d="M3.105 2.22A2.25 2.25 0 00.999 4.31v11.388a2.25 2.25 0 002.106 2.091l14.134-4.71a2.25 2.25 0 000-4.184L3.105 2.22z" />
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    function renderCommunicationDrafting() {
+        const result = state.draftResult;
+        const isLoading = state.draftLoading;
+
+        // Helper to format the result based on type
+        const renderResultContent = () => {
+            if (!result) {
+                return '<div class="h-full flex items-center justify-center text-gray-400">Click a drafting option to generate text.</div>';
+            }
+            
+            if (result.type === 'text') {
+                return `
+                    <h4 class="font-bold text-lg text-primary-blue mb-2">${state.draftType === 'patient' ? 'Patient-Friendly Explanation' : 'Raw Text Output'}</h4>
+                    <textarea readonly class="w-full h-full p-4 border border-gray-300 rounded-lg bg-gray-50 whitespace-pre-wrap">${result.content}</textarea>
+                `;
+            } else if (result.type === 'json') {
+                const jsonContent = result.content;
+                return `
+                    <h4 class="font-bold text-lg text-primary-blue mb-2">Structured Referral Draft</h4>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <strong class="text-blue-700 block">Reason for Referral:</strong>
+                            <p>${jsonContent.reason_for_referral || 'N/A'}</p>
+                        </div>
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-md">
+                            <strong class="text-red-700 block">Key Radiological Findings:</strong>
+                            <p>${jsonContent.key_radiological_findings || 'N/A'}</p>
+                        </div>
+                        <div class="p-3 bg-green-50 border border-green-200 rounded-md">
+                            <strong class="text-green-700 block">Recommended Action:</strong>
+                            <p>${jsonContent.recommended_action || 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            return '';
+        };
+
+        return `
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Communication & Drafting Assistant</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Input Area -->
+                <div class="bg-white p-6 rounded-lg shadow-md h-full">
+                    <h3 class="text-xl font-semibold mb-4 text-accent-purple">Report Text Input</h3>
+                    <textarea id="draft-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-accent-purple focus:border-accent-purple mb-4" rows="10" placeholder="Paste the full medical report text (Impression, Findings, Recommendations) here to draft communication documents.">${state.draftInput}</textarea>
+                    
+                    <div class="space-y-3">
+                        <button id="draft-patient-btn" data-type="patient" class="w-full bg-accent-teal text-white py-3 rounded-lg shadow-md hover:bg-teal-600 transition duration-150 flex items-center justify-center font-semibold ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${isLoading || !state.draftInput.trim() ? 'disabled' : ''}>
+                            ${isLoading && state.draftType === 'patient' ? `
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating Patient Text...
+                            ` : 'Generate Patient-Friendly Explanation ✨'}
+                        </button>
+
+                        <button id="draft-referral-btn" data-type="referral" class="w-full bg-accent-purple text-white py-3 rounded-lg shadow-md hover:bg-purple-600 transition duration-150 flex items-center justify-center font-semibold ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}" ${isLoading || !state.draftInput.trim() ? 'disabled' : ''}>
+                             ${isLoading && state.draftType === 'referral' ? `
+                                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating Referral JSON...
+                            ` : 'Generate Structured Referral Draft ✨'}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Output Area -->
+                <div class="bg-white p-6 rounded-lg shadow-md h-full draft-container">
+                    ${isLoading ? `
+                        <div class="flex flex-col items-center justify-center h-full text-gray-500">
+                            <svg class="animate-pulse h-10 w-10 text-accent-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <p class="mt-4">Drafting content, please wait...</p>
+                        </div>
+                    ` : renderResultContent()}
+                </div>
+            </div>
+        `;
+    }
+
+    // --- Event Listeners and Setup ---
+
+    function setupModuleListeners() {
+        // Knowledge Base Listeners
+        const kbFormEl = document.getElementById('kb-form');
+        if (kbFormEl) {
+            kbFormEl.addEventListener('submit', handleKBQuery);
+            document.getElementById('kb-query-input').addEventListener('input', (e) => state.kbQuery = e.target.value);
+        }
+        
+        // General Doctor AI Chat Listeners
+        const chatFormEl = document.getElementById('chat-form');
+        if (chatFormEl) {
+            // Note: handleChatQuery now reads the input value directly from the DOM on submit
+            chatFormEl.addEventListener('submit', handleChatQuery);
+            // This input listener only updates the state for initial rendering and non-empty check
+            document.getElementById('chat-input').addEventListener('input', (e) => {
+                state.chatInput = e.target.value;
+                document.getElementById('chat-form').querySelector('button').disabled = state.chatIsLoading || !state.chatInput.trim();
+            });
+        }
+
+        // AI Image Analysis Listeners
+        const imageUploadEl = document.getElementById('image-upload');
+        if (imageUploadEl) {
+            imageUploadEl.addEventListener('change', handleImageUpload);
+        }
+        const analyzeBtnEl = document.getElementById('analyze-image-btn');
+        if (analyzeBtnEl) {
+            analyzeBtnEl.addEventListener('click', handleAIImageAnalysis);
+        }
+        const aiPromptEl = document.getElementById('ai-prompt');
+        if (aiPromptEl) {
+            aiPromptEl.addEventListener('input', (e) => state.aiImagePrompt = e.target.value);
+        }
+        const playTTSBtn = document.getElementById('play-tts-btn');
+        if (playTTSBtn) {
+            playTTSBtn.addEventListener('click', () => {
+                if (state.isPlayingAudio) {
+                    stopTTSPlayback();
+                } else if (state.aiImageResult && !state.ttsLoading) {
+                    const reportText = playTTSBtn.dataset.reportText;
+                    if (reportText) {
+                        handleTTSGeneration(reportText);
+                    }
+                }
+            });
+        }
+        
+        // Communication Drafting Listeners
+        const draftInputEl = document.getElementById('draft-input');
+        if (draftInputEl) {
+            draftInputEl.addEventListener('input', (e) => {
+                state.draftInput = e.target.value;
+                render(); // Rerender to update button disabled state
+            });
+        }
+        
+        const draftPatientBtn = document.getElementById('draft-patient-btn');
+        if (draftPatientBtn) {
+            draftPatientBtn.addEventListener('click', () => {
+                state.draftType = 'patient';
+                handleCommunicationDraft();
+            });
+        }
+
+        const draftReferralBtn = document.getElementById('draft-referral-btn');
+        if (draftReferralBtn) {
+            draftReferralBtn.addEventListener('click', () => {
+                state.draftType = 'referral';
+                handleCommunicationDraft();
+            });
+        }
+    }
+
+    // Initial setup when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        // Sidebar navigation listener
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                state.currentModule = e.currentTarget.dataset.module;
+                // Stop audio if user navigates away
+                stopTTSPlayback(false);
+                render();
+            });
+        });
+
+        initializeFirebase();
+        render(); // Initial render to show loading states
+    });
+
+</script>
+
+<!-- Desktop Layout: Sidebar and Main Content -->
+<div class="flex w-full min-h-screen">
+    <!-- Sidebar Navigation (20% width on desktop, responsive) -->
+    <aside class="w-16 md:w-64 bg-white border-r border-gray-200 flex flex-col p-4 shadow-xl transition-all duration-300">
+        <div class="flex-shrink-0 mb-8">
+            <h1 class="text-xl md:text-2xl font-black text-primary-blue text-center md:text-left">
+                <span class="block md:hidden">M/AI</span>
+                <span class="hidden md:block">Medical AI Hub</span>
+            </h1>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-grow space-y-2">
+            <button class="nav-item w-full flex items-center p-3 rounded-lg transition duration-150 text-gray-600 hover:bg-gray-100" data-module="AIImageAnalysis">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 flex-shrink-0">
+                    <path fill-rule="evenodd" d="M2.5 3A1.5 1.5 0 001 4.5v12.5A1.5 1.5 0 002.5 18h14a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-3.379a1.5 1.5 0 01-1.06-.44L10.94 2.44A1.5 1.5 0 009.879 2H2.5zM12 7.75a.75.75 0 01.75-.75h2.5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-2.75h-2.5a.75.75 0 01-.75-.75z" clip-rule="evenodd" />
+                </svg>
+                <span class="hidden md:block ml-3 font-medium">AI Image Analysis</span>
+            </button>
+            
+            <button class="nav-item w-full flex items-center p-3 rounded-lg transition duration-150 text-gray-600 hover:bg-gray-100" data-module="KnowledgeBase">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 flex-shrink-0">
+                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zm-2 9v2a2 2 0 002 2h12a2 2 0 002-2v-2H2z" />
+                    <path fill-rule="evenodd" d="M14.5 10a.5.5 0 00-.5.5v1.5a.5.5 0 001 0V10.5a.5.5 0 00-.5-.5z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M4 8.5a.5.5 0 01.5-.5h2.75a.5.5 0 010 1H4.5a.5.5 0 01-.5-.5zM4 11.5a.5.5 0 01.5-.5h2.75a.5.5 0 010 1H4.5a.5.5 0 01-.5-.5z" clip-rule="evenodd" />
+                </svg>
+                <span class="hidden md:block ml-3 font-medium">Knowledge Base</span>
+            </button>
+            
+            <button class="nav-item w-full flex items-center p-3 rounded-lg transition duration-150 text-gray-600 hover:bg-gray-100" data-module="GeneralDoctorAI">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 flex-shrink-0">
+                    <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.312-1.002A5.986 5.986 0 0110 9a5.986 5.986 0 016.223 4.491 1.23 1.23 0 00.312 1.002A12.004 12.004 0 0110 18a12.004 12.004 0 01-6.535-3.507z" />
+                </svg>
+                <span class="hidden md:block ml-3 font-medium">General Doctor AI</span>
+            </button>
+            
+            <button class="nav-item w-full flex items-center p-3 rounded-lg transition duration-150 text-gray-600 hover:bg-gray-100" data-module="CommunicationDrafting">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6 flex-shrink-0">
+                    <path d="M2.695 14.764l-1.267 2.766c-.033.072-.047.15-.047.23a.75.75 0 00.916.745l2.766-1.267a1.5 1.5 0 00.742-.497l8.281-9.986-5.885-5.885-9.986 8.281a1.5 1.5 0 00-.497.742z" />
+                    <path fill-rule="evenodd" d="M18.84 5.467L15.485 2.112a2.5 2.5 0 00-3.535 0l-1.076 1.076 5.883 5.883 1.076-1.076a2.5 2.5 0 000-3.535z" clip-rule="evenodd" />
+                </svg>
+                <span class="hidden md:block ml-3 font-medium">Communication Drafting</span>
+            </button>
+        </nav>
+
+        <!-- User/Auth Status -->
+        <div id="user-status" class="mt-8 p-3 border-t border-gray-100 flex-shrink-0">
+            <!-- Content rendered by JS -->
+        </div>
+    </aside>
+
+    <!-- Main Content Area (80% width on desktop) -->
+    <main id="content-area" class="flex-grow p-4 md:p-8 overflow-y-auto">
+        <!-- Content injected by render() function -->
+    </main>
+</div>
+
+</body>
+</html>
