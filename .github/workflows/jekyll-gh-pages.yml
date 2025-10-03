@@ -33,7 +33,7 @@ jobs:
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
-          source: ./docs
+          source: https://github.com/hasanhujiri/MEDICALAI/blob/c348f878bc9c6a36618abdfc447a7a188c413537/index.html
           destination: ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
