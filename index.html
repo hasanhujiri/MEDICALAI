@@ -114,6 +114,16 @@
             /* Adjusted for headers and input */
             overflow-y: auto;
         }
+
+        .api-key-notice {
+            background-color: #fef2f2;
+            border: 2px solid #fca5a5;
+            color: #991b1b;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            font-weight: 600;
+        }
     </style>
     <!-- Lucide icons for visual elements -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -147,6 +157,11 @@
     <!-- Main Content Area -->
     <div class="main-content">
         <h2 id="mainTitle" class="text-4xl font-bold text-gray-900 mb-8">AI Image Analysis</h2>
+
+        <!-- API Key Notice -->
+        <div class="api-key-notice">
+            ⚠️ <strong>Security Notice:</strong> API key has been removed for security. To use this application, you need to add your Gemini API key securely. See the code comments for instructions.
+        </div>
 
         <!-- All views are contained here. Only the active view will be displayed via JS. -->
         <div id="viewContainer">
@@ -343,10 +358,21 @@
         const firebaseConfig = typeof firebase_config !== 'undefined' ? JSON.parse(firebase_config) : null;
         const initialAuthToken = typeof initial_auth_token !== 'undefined' ? initial_auth_token : null;
 
-        // --- IMPORTANT: PASTE YOUR GEMINI API KEY HERE ---
-        const GEMINI_API_KEY = "AIzaSyA0yEml30Y1NItvJ5hZoLKi0EnMTLIgNng";
+        // --- SECURITY UPDATE: API KEY REMOVED FOR SECURITY ---
+        // IMPORTANT: To use this application, you need to implement a secure method to handle the API key.
+        // OPTIONS:
+        // 1. Use environment variables in a server-side application
+        // 2. Implement a backend proxy that handles API calls securely
+        // 3. Use serverless functions (Vercel, Netlify, AWS Lambda) to proxy API requests
+        // 4. For development only: Set the key here temporarily, but NEVER commit it to version control
+        
+        const GEMINI_API_KEY = null; // API key removed for security
+        
+        // If you need to test locally, uncomment the line below and add your key, but DO NOT commit this:
+        // const GEMINI_API_KEY = "your-api-key-here"; // NEVER commit this line
+        
         const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+        const apiUrl = GEMINI_API_KEY ? `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}` : null;
 
         let app, db, auth;
         let userId = null;
@@ -598,8 +624,8 @@
 
 
         window.runAnalysis = async function() {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
-                displayError("API Key Missing", "Please paste your Gemini API Key into the GEMINI_API_KEY variable.");
+            if (!GEMINI_API_KEY) {
+                displayError("API Key Missing", "Please configure your Gemini API Key securely. See code comments for instructions.");
                 return;
             }
             if (!imageBase64Data) {
@@ -746,8 +772,8 @@
         }
 
         window.runKnowledgeBaseSearch = async function() {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
-                displayError("API Key Missing", "Please paste your Gemini API Key.");
+            if (!GEMINI_API_KEY) {
+                displayError("API Key Missing", "Please configure your Gemini API Key securely. See code comments for instructions.");
                 return;
             }
 
@@ -941,8 +967,8 @@
 
 
         window.draftCommunication = async function() {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
-                displayError("API Key Missing", "Please paste your Gemini API Key.");
+            if (!GEMINI_API_KEY) {
+                displayError("API Key Missing", "Please configure your Gemini API Key securely. See code comments for instructions.");
                 return;
             }
 
