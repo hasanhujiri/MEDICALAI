@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +9,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fc;
             min-height: 100vh;
         }
+
         .sidebar {
             width: 280px;
             background-color: #ffffff;
@@ -22,11 +25,13 @@
             top: 0;
             height: 100vh;
         }
+
         .main-content {
             flex-grow: 1;
             padding: 3rem;
             max-width: calc(100% - 280px);
         }
+
         .nav-item {
             display: flex;
             align-items: center;
@@ -37,20 +42,26 @@
             transition: all 0.2s;
             font-weight: 500;
         }
+
         .nav-item:hover {
             background-color: #f3f4f6;
         }
+
         .nav-item.active {
             background-color: #3b82f6;
             color: white;
             box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
         }
+
         .nav-item:not(.active) i {
-            color: #6b7280; /* gray-500 */
+            color: #6b7280;
+            /* gray-500 */
         }
+
         .nav-item.active i {
             color: white;
         }
+
         .drag-drop-area {
             border: 2px dashed #93c5fd;
             background-color: #eff6ff;
@@ -63,71 +74,69 @@
             cursor: pointer;
             transition: border-color 0.3s;
         }
+
         .drag-drop-area:hover {
             border-color: #3b82f6;
         }
+
         .report-section {
             padding: 1rem;
             border-bottom: 1px solid #e5e7eb;
         }
+
         .report-section:last-child {
             border-bottom: none;
         }
+
         .chat-message {
             max-width: 80%;
             padding: 0.75rem;
             border-radius: 0.75rem;
             margin-bottom: 1rem;
         }
+
         .user-message {
-            background-color: #dbeafe; /* blue-100 */
+            background-color: #dbeafe;
+            /* blue-100 */
             align-self: flex-end;
             margin-left: auto;
         }
+
         .ai-message {
             background-color: #ffffff;
             border: 1px solid #e5e7eb;
             align-self: flex-start;
             margin-right: auto;
         }
+
         .chat-container {
-            height: calc(100vh - 270px); /* Adjusted for headers and input */
+            height: calc(100vh - 270px);
+            /* Adjusted for headers and input */
             overflow-y: auto;
         }
     </style>
     <!-- Lucide icons for visual elements -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="flex">
 
+<body class="flex">
     <!-- Sidebar Navigation -->
     <div class="sidebar p-6 flex flex-col justify-between">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900 mb-10">Medical AI Hub</h1>
             <nav id="nav-container">
                 <div class="nav-item active" data-view="image-analysis">
-                    <i data-lucide="scan" class="w-5 h-5 mr-3"></i>
-                    AI Image Analysis
+                    <i data-lucide="scan" class="w-5 h-5 mr-3"></i> AI Image Analysis
                 </div>
                 <div class="nav-item text-gray-600" data-view="knowledge-base">
-                    <i data-lucide="book-open-text" class="w-5 h-5 mr-3"></i>
-                    Knowledge Base
-                </div>
-                <div class="nav-item text-gray-600" data-view="doctor-ai">
-                    <i data-lucide="stethoscope" class="w-5 h-5 mr-3"></i>
-                    General Doctor AI
+                    <i data-lucide="book-open-text" class="w-5 h-5 mr-3"></i> Knowledge Base
                 </div>
                 <div class="nav-item text-gray-600" data-view="communication">
-                    <i data-lucide="messages-square" class="w-5 h-5 mr-3"></i>
-                    Communication Drafting
+                    <i data-lucide="messages-square" class="w-5 h-5 mr-3"></i> Communication Drafting
                 </div>
             </nav>
         </div>
-        <!-- Footer Info Block -->
-        <div class="p-4 bg-slate-50 rounded-lg text-xs text-gray-600 mt-8">
-            <p class="mb-1">User ID: <span id="userIdDisplay" class="font-mono font-semibold text-gray-800">Loading...</span></p>
-            <p>App ID: <span id="appIdDisplay" class="font-mono text-gray-500">Loading...</span></p>
-        </div>
+        <!-- REMOVED: Footer Info Block was here -->
         <!-- Error Message Placeholder -->
         <div id="errorMessage" class="hidden fixed bottom-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50" role="alert">
             <p class="font-bold" id="errorTitle">Something went wrong</p>
@@ -142,14 +151,14 @@
         <!-- All views are contained here. Only the active view will be displayed via JS. -->
         <div id="viewContainer">
 
-            <!-- ======================================================================= -->
-            <!-- 1. AI IMAGE ANALYSIS VIEW -->
-            <!-- ======================================================================= -->
+            <!-- =================================== -->
+            <!-- 1. AI IMAGE ANALYSIS VIEW           -->
+            <!-- =================================== -->
             <div id="image-analysis-view" class="grid lg:grid-cols-2 gap-8 view-content">
                 <!-- Input Panel (Left) -->
                 <div class="bg-white p-8 rounded-xl shadow-lg h-full">
                     <h3 class="text-xl font-semibold text-gray-800 mb-6">Image Input</h3>
-                    
+
                     <!-- File Upload/Drag and Drop Area -->
                     <div id="dropArea" class="drag-drop-area mb-4 p-6" onclick="document.getElementById('fileInput').click()">
                         <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
@@ -157,18 +166,18 @@
                         <p class="text-blue-700 font-medium">Upload Image (X-Ray, CT, etc.)</p>
                         <p class="text-sm text-gray-500 mt-1">Click to select or drag and drop here</p>
                     </div>
-                    
+
                     <!-- Image Preview -->
                     <div id="imagePreviewContainer" class="hidden mb-6">
                         <img id="imagePreview" class="w-full max-h-72 object-contain rounded-lg border border-gray-300 bg-gray-100" alt="Image Preview">
                     </div>
 
                     <!-- Text Prompt Input -->
-                    <label for="promptInput" class="block text-sm font-medium text-gray-700 mb-2">Analysis Prompt:</label>
+                    <label for="promptInput" class="block text-sm font-medium text-gray-700 mb-2">Analysis Prompt</label>
                     <textarea id="promptInput" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition resize-none" placeholder="Analyze the following image for radiological findings. Provide a structured JSON output with fields 'impression', 'findings', 'recommendations', and 'severity'"></textarea>
 
                     <!-- Run Button -->
-                    <button onclick="runAnalysis()" id="runButton" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-lg transform hover:scale-[1.01]" disabled>
+                    <button onclick="runAnalysis()" id="runButton" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-lg transform hover:scale-1.01 disabled:opacity-50" disabled>
                         Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>
                     </button>
                     <div id="imageAnalysisLoadingIndicator" class="mt-4 text-center text-blue-600 font-medium hidden">
@@ -186,6 +195,7 @@
                         <h3 class="text-xl font-semibold mb-1 text-gray-800">Structured Report</h3>
                         <p id="severityDisplay" class="text-sm font-medium text-gray-500">Severity: Awaiting Analysis</p>
                     </div>
+
                     <div id="imageReportOutput" class="min-h-[400px] bg-gray-50 p-4 border-t border-gray-200 overflow-y-auto">
                         <p class="text-gray-500 italic p-4">Upload an image and click "Run AI Analysis" to generate a structured radiological report.</p>
                     </div>
@@ -197,17 +207,16 @@
                 </div>
             </div>
 
-            <!-- ======================================================================= -->
-            <!-- 2. KNOWLEDGE BASE VIEW -->
-            <!-- ======================================================================= -->
+            <!-- =================================== -->
+            <!-- 2. KNOWLEDGE BASE VIEW              -->
+            <!-- =================================== -->
             <div id="knowledge-base-view" class="hidden view-content">
                 <div class="lg:grid lg:grid-cols-2 lg:gap-8">
                     <div class="bg-white p-8 rounded-xl shadow-lg">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Search Medical Literature (Grounding)</h3>
-                        <label for="kbQuery" class="block text-sm font-medium text-gray-700 mb-2">Enter Medical Query:</label>
+                        <label for="kbQuery" class="block text-sm font-medium text-gray-700 mb-2">Enter Medical Query</label>
                         <textarea id="kbQuery" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition resize-none" placeholder="e.g., What is the standard treatment protocol for stage II non-small cell lung cancer?"></textarea>
-                        
-                        <button onclick="runKnowledgeBaseSearch()" id="kbSearchButton" class="w-full mt-6 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition shadow-lg transform hover:scale-[1.01]">
+                        <button onclick="runKnowledgeBaseSearch()" id="kbSearchButton" class="w-full mt-6 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition shadow-lg transform hover:scale-1.01">
                             Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>
                         </button>
                         <div id="kbLoadingIndicator" class="mt-4 text-center text-indigo-600 font-medium hidden">
@@ -227,63 +236,42 @@
                 </div>
             </div>
 
-            <!-- ======================================================================= -->
-            <!-- 3. GENERAL DOCTOR AI VIEW -->
-            <!-- ======================================================================= -->
-            <div id="doctor-ai-view" class="hidden view-content">
-                <div class="bg-white p-8 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Conversational AI</h3>
-                    
-                    <div id="chatHistoryContainer" class="chat-container overflow-y-auto p-4 flex flex-col space-y-4 mb-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <!-- Chat messages will be injected here -->
-                    </div>
-
-                    <div class="flex items-center space-x-4">
-                        <input type="text" id="chatInput" placeholder="Ask a medical question (e.g., Explain the role of TNF-alpha in inflammation)..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
-                        <button onclick="sendMessage()" id="chatSendButton" class="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center disabled:opacity-50" disabled>
-                            <i data-lucide="send" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                    <div id="chatLoadingIndicator" class="mt-2 text-center text-blue-600 font-medium hidden">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        AI is typing...
-                    </div>
-                </div>
-            </div>
-
-            <!-- ======================================================================= -->
-            <!-- 4. COMMUNICATION DRAFTING VIEW (UPDATED HERE) -->
-            <!-- ======================================================================= -->
+            <!-- ======================================================= -->
+            <!-- 4. COMMUNICATION DRAFTING VIEW (UPDATED HERE)           -->
+            <!-- ======================================================= -->
             <div id="communication-view" class="hidden view-content">
                 <div class="lg:grid lg:grid-cols-2 lg:gap-8">
                     <!-- Input Form (Left) -->
                     <div class="bg-white p-8 rounded-xl shadow-lg">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Drafting Parameters</h3>
 
+                        <div id="dictationBanner" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg text-center text-sm font-medium">
+                            🔴 Dictation is active. Click the square to stop.
+                        </div>
+
                         <div class="space-y-4">
                             <div>
                                 <label for="draftRecipient" class="block text-sm font-medium text-gray-700">Communication Type</label>
                                 <!-- UPDATED: Added onchange handler to manage mic button visibility -->
                                 <select id="draftRecipient" onchange="handleDraftRecipientChange(this.value)" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
-                                    <option value="Referring Physician Update">Referring Physician (Update/Referral)</option>
-                                    <option value="Patient Follow-up">Patient (Follow-up/Education)</option>
+                                    <option value="Referring Physician Update">Referring Physician Update/Referral</option>
+                                    <option value="Patient Follow-up">Patient Follow-up/Education</option>
                                     <option value="Radiology Report Draft" selected>Radiology Report Draft</option>
-                                    <option value="Clinic Administrator">Clinic Administrator (Request/Report)</option>
+                                    <option value="Clinic Administrator">Clinic Administrator Request/Report</option>
                                 </select>
                             </div>
+
                             <div>
                                 <label for="draftTopic" class="block text-sm font-medium text-gray-700">Communication Topic/Details</label>
                                 <div class="flex items-end space-x-2">
                                     <textarea id="draftTopic" rows="5" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 transition resize-none" placeholder="e.g., Patient is J. Doe. Needs urgent consultation for a newly diagnosed renal mass (7cm, left kidney). For Radiology Reports, list the study and findings here."></textarea>
                                     <!-- Dictation Button - ID added for easier targeting, initially shown based on selected="true" above -->
-                                    <button onclick="toggleDictation(this)" id="dictationButton" class="mic-btn p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 shadow-md flex-shrink-0" data-recording="false" title="Start Dictation">
-                                        <i data-lucide="mic" class="w-6 h-6"></i>
+                                    <button onclick="toggleDictation()" id="dictationButton" class="mic-btn p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 shadow-md flex-shrink-0" data-recording="false" title="Start Dictation">
+                                        <!-- SVG icon will be injected by JS -->
                                     </button>
                                 </div>
                             </div>
+
                             <div class="flex space-x-4">
                                 <div class="flex-1">
                                     <label for="draftUrgency" class="block text-sm font-medium text-gray-700">Urgency</label>
@@ -305,7 +293,7 @@
                             </div>
                         </div>
 
-                        <button onclick="draftCommunication()" id="draftButton" class="w-full mt-6 bg-teal-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-teal-700 transition shadow-lg transform hover:scale-[1.01]">
+                        <button onclick="draftCommunication()" id="draftButton" class="w-full mt-6 bg-teal-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-teal-700 transition shadow-lg transform hover:scale-1.01">
                             Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>
                         </button>
                         <div id="draftLoadingIndicator" class="mt-4 text-center text-teal-600 font-medium hidden">
@@ -316,6 +304,7 @@
                             Drafting communication...
                         </div>
                     </div>
+
                     <!-- Output Panel (Right) -->
                     <div class="bg-white p-8 rounded-xl shadow-lg">
                         <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Generated Draft</h3>
@@ -329,38 +318,47 @@
         </div> <!-- End viewContainer -->
     </div> <!-- End main-content -->
 
-    <!-- JavaScript for Firebase, Gemini API Call, and UI Logic -->
+
+    <!-- =========================================================== -->
+    <!-- JavaScript for Firebase, Gemini API Call, and UI Logic      -->
+    <!-- =========================================================== -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // ====================================================================
+        import {
+            initializeApp
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            signInAnonymously,
+            signInWithCustomToken,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
         // --- 1. MANDATORY GLOBAL VARIABLES & CONFIGURATION ---
-        
         // DO NOT CHANGE THESE VARIABLES - they are provided by the Canvas environment.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-medical-ai-hub';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
+        const appId = typeof app_id !== 'undefined' ? app_id : 'default-medical-ai-hub';
+        const firebaseConfig = typeof firebase_config !== 'undefined' ? JSON.parse(firebase_config) : null;
+        const initialAuthToken = typeof initial_auth_token !== 'undefined' ? initial_auth_token : null;
+
         // --- IMPORTANT: PASTE YOUR GEMINI API KEY HERE ---
-        const GEMINI_API_KEY = "AIzaSyA0yEml30Y1NItvJ5hZoLKi0EnMTLIgNng"; 
-        
+        const GEMINI_API_KEY = "AIzaSyA0yEml30Y1NItvJ5hZoLKi0EnMTLIgNng";
         const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
-        
+
         let app, db, auth;
         let userId = null;
         let imageBase64Data = null; // Store the Base64 image data globally
 
-        // Chat state for General Doctor AI
-        let chatHistory = [{ 
-            role: "model", 
-            parts: [{ text: "Hello! I am the General Doctor AI. I can help you with medical information, answer questions, or clarify concepts. **I cannot provide diagnosis or personalized medical advice.** How can I assist you today?" }] 
-        }];
+        // REMOVED: Chat state for General Doctor AI
+        
+        // *** NEW: Global variables for real dictation
+        let recognition;
+        let isRecording = false;
+        let finalTranscript = '';
 
-        // **NEW GLOBAL VARIABLE FOR DICTATION SIMULATION**
-        let dictationInterval = null;
 
         // DOM elements
         const fileInput = document.getElementById('fileInput');
@@ -369,37 +367,31 @@
         const promptInput = document.getElementById('promptInput');
         const imageReportOutput = document.getElementById('imageReportOutput');
         const runButton = document.getElementById('runButton');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const appIdDisplay = document.getElementById('appIdDisplay');
+        // REMOVED: userIdDisplay and appIdDisplay constants
         const errorTitle = document.getElementById('errorTitle');
         const errorDetail = document.getElementById('errorDetail');
         const errorMessage = document.getElementById('errorMessage');
         const reportHeader = document.getElementById('reportHeader');
         const severityDisplay = document.getElementById('severityDisplay');
-        
         const mainTitle = document.getElementById('mainTitle');
         const viewContainer = document.getElementById('viewContainer');
         const navContainer = document.getElementById('nav-container');
-
         const draftRecipientSelect = document.getElementById('draftRecipient');
         const dictationButton = document.getElementById('dictationButton');
 
-        // ====================================================================
+
         // --- 2. FIREBASE INITIALIZATION & AUTHENTICATION (MANDATORY) ---
-        
         async function initializeFirebase() {
             if (!firebaseConfig) {
                 console.error("Firebase configuration is missing.");
-                userIdDisplay.textContent = "Error: No Config";
+                // REMOVED: userIdDisplay.textContent update
                 return;
             }
-
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                
-                appIdDisplay.textContent = appId;
+                // REMOVED: appIdDisplay.textContent update
 
                 // Sign in with custom token or anonymously
                 if (initialAuthToken) {
@@ -412,33 +404,32 @@
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
-                        userIdDisplay.textContent = userId;
-                        // Enable chat input only after auth is ready
-                        document.getElementById('chatSendButton').disabled = false;
-                        document.getElementById('chatInput').addEventListener('keypress', handleChatInputKeypress);
+                        // REMOVED: userIdDisplay.textContent update
+                        console.log("Authenticated User ID:", userId); // Log to console instead
+                        // REMOVED: Chat-related initializations
                     } else {
                         userId = null;
-                        userIdDisplay.textContent = "Signed Out";
+                        // REMOVED: userIdDisplay.textContent update
+                        console.log("User signed out.");
                     }
                 });
+
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                userIdDisplay.textContent = `Auth Error: ${error.code}`;
+                // REMOVED: userIdDisplay.textContent update
             }
         }
-        
-        // ====================================================================
+
+
         // --- 3. UI, UTILITY, and NAVIGATION ---
-        
+
         /**
          * Switches the active content view based on the navigation item clicked.
          * @param {string} viewName - The ID suffix of the view to show (e.g., 'image-analysis').
          */
         window.switchView = function(viewName) {
             // Hide all views and remove active class from all nav items
-            document.querySelectorAll('.view-content').forEach(view => {
-                view.classList.add('hidden');
-            });
+            document.querySelectorAll('.view-content').forEach(view => view.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active', 'text-gray-600');
                 if (item.getAttribute('data-view') !== viewName) {
@@ -451,28 +442,27 @@
             if (targetView) {
                 targetView.classList.remove('hidden');
                 document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
-                
-                // Update the main title
-                const titleMap = {
-                    'image-analysis': 'AI Image Analysis',
-                    'knowledge-base': 'Medical Knowledge Base',
-                    'doctor-ai': 'General Doctor AI Chat',
-                    'communication': 'Communication Drafting'
-                };
-                mainTitle.textContent = titleMap[viewName] || 'Medical AI Hub';
+            }
 
-                 // Handle dictation button visibility when switching to/from communication view
-                if (viewName === 'communication') {
-                    handleDraftRecipientChange(draftRecipientSelect.value);
-                } else if (dictationButton.getAttribute('data-recording') === 'true') {
-                    // If we leave the view while dictating, stop the simulation
-                    toggleDictation(dictationButton);
-                }
+            // Update the main title
+            const titleMap = {
+                'image-analysis': 'AI Image Analysis',
+                'knowledge-base': 'Medical Knowledge Base',
+                'communication': 'Communication Drafting'
+            };
+            mainTitle.textContent = titleMap[viewName] || 'Medical AI Hub';
+
+            // Handle dictation button visibility when switching to/from communication view
+            if (viewName === 'communication') {
+                handleDraftRecipientChange(draftRecipientSelect.value);
+            } else if (isRecording) {
+                // If we leave the view while dictating, stop the recognition
+                stopDictation();
             }
         }
 
         /**
-         * Converts file to Base64 and updates UI preview. (Used by Image Analysis)
+         * Converts file to Base64 and updates UI preview. Used by Image Analysis
          */
         window.handleFileSelect = function(event) {
             const file = event.target.files[0];
@@ -486,9 +476,8 @@
 
             const reader = new FileReader();
             reader.onload = () => {
-                const base64 = reader.result;
-                // Base64 string includes 'data:image/jpeg;base64,'. We only need the data part.
-                imageBase64Data = base64.split(',')[1]; 
+                const base64 = reader.result; // Base64 string includes "data:image/jpeg;base64,". We only need the data part.
+                imageBase64Data = base64.split(',')[1];
                 imagePreview.src = base64;
                 imagePreviewContainer.classList.remove('hidden');
                 runButton.disabled = false;
@@ -511,9 +500,7 @@
             errorTitle.textContent = title;
             errorDetail.textContent = detail;
             errorMessage.classList.remove('hidden');
-            setTimeout(() => {
-                errorMessage.classList.add('hidden');
-            }, 5000);
+            setTimeout(() => errorMessage.classList.add('hidden'), 5000);
         }
 
         /**
@@ -526,32 +513,40 @@
             } else {
                 dictationButton.classList.add('hidden');
                 // Ensure dictation stops if the user changes the type while recording
-                if (dictationButton.getAttribute('data-recording') === 'true') {
-                    toggleDictation(dictationButton);
+                if (isRecording) {
+                    stopDictation();
                 }
             }
-            lucide.createIcons();
         }
-        
-        // ====================================================================
-        // --- 4. MODULE 1: IMAGE ANALYSIS (Multimodal/Structured Output) ---
 
-        // Added 'severity' to the schema
+        lucide.createIcons();
+
+        // --- 4. MODULE 1: IMAGE ANALYSIS (Multimodal/Structured Output) ---
         const reportSchema = {
             type: "OBJECT",
             properties: {
-                impression: { type: "STRING", description: "The final diagnostic summary or conclusion of the radiological findings." },
-                findings: { type: "STRING", description: "Detailed, objective description of the radiological observations." },
-                recommendations: { type: "STRING", description: "Suggested follow-up studies, clinical correlation, or patient management steps." },
-                severity: { 
-                    type: "STRING", 
-                    description: "Classification of the findings severity. MUST be one of these three exact strings: 'Normal Findings', 'Minor Findings', or 'Critical Findings'." 
-                }
+                impression: {
+                    type: "STRING",
+                    description: "The final diagnostic summary or conclusion of the radiological findings."
+                },
+                findings: {
+                    type: "STRING",
+                    description: "Detailed, objective description of the radiological observations."
+                },
+                recommendations: {
+                    type: "STRING",
+                    description: "Suggested follow-up studies, clinical correlation, or patient management steps."
+                },
+                severity: {
+                    type: "STRING",
+                    description: "Classification of the findings' severity. MUST be one of these three exact strings: 'Normal Findings', 'Minor Findings', or 'Critical Findings'."
+                },
             },
             required: ["impression", "findings", "recommendations", "severity"],
             propertyOrdering: ["impression", "findings", "recommendations", "severity"]
         };
-        
+
+
         function formatReportHtml(reportJson) {
             const severity = reportJson.severity ? reportJson.severity.toLowerCase() : 'unknown';
             let severityClass = 'bg-gray-100 text-gray-800'; // Default
@@ -571,7 +566,7 @@
                 severityTextColor = 'text-red-700';
                 severityText = 'Severity: Critical Findings';
             }
-            
+
             // Update the header styling
             reportHeader.className = `p-6 transition duration-300 ${severityClass}`;
             severityDisplay.className = `text-sm font-bold ${severityTextColor}`;
@@ -579,26 +574,31 @@
 
 
             let html = '';
-            const sections = [
-                { key: 'impression', title: 'Impression' },
-                { key: 'findings', title: 'Findings' },
-                { key: 'recommendations', title: 'Recommendations' }
-            ];
+            const sections = [{
+                key: 'impression',
+                title: 'Impression'
+            }, {
+                key: 'findings',
+                title: 'Findings'
+            }, {
+                key: 'recommendations',
+                title: 'Recommendations'
+            }, ];
 
             for (const section of sections) {
-                const content = reportJson[section.key] || 'N/A';
+                const content = reportJson[section.key] || "N/A";
                 html += `
-                    <div class="report-section">
-                        <h4 class="text-lg font-bold text-blue-700 mb-2">${section.title}</h4>
-                        <p class="text-gray-800 whitespace-pre-wrap">${content}</p>
-                    </div>
-                `;
+                <div class="report-section">
+                    <h4 class="text-lg font-bold text-blue-700 mb-2">${section.title}</h4>
+                    <p class="text-gray-800 whitespace-pre-wrap">${content}</p>
+                </div>`;
             }
             return html;
         }
 
+
         window.runAnalysis = async function() {
-            if (!GEMINI_API_KEY) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
                 displayError("API Key Missing", "Please paste your Gemini API Key into the GEMINI_API_KEY variable.");
                 return;
             }
@@ -606,56 +606,56 @@
                 displayError("No Image Selected", "Please upload a medical image before running the analysis.");
                 return;
             }
-            
-            const systemPrompt = "You are a specialized medical imaging AI. Analyze the uploaded image and the user's prompt to generate a structured radiological report. The 'severity' must be accurately determined and MUST be one of 'Normal Findings', 'Minor Findings', or 'Critical Findings'. Do not deviate from the JSON schema.";
 
+            const systemPrompt = "You are a specialized medical imaging AI. Analyze the uploaded image and the user's prompt to generate a structured radiological report. The severity must be accurately determined and MUST be one of 'Normal Findings', 'Minor Findings', or 'Critical Findings'. Do not deviate from the JSON schema.";
             const prompt = promptInput.value.trim();
             const mimeType = fileInput.files[0].type;
             const loadingIndicator = document.getElementById('imageAnalysisLoadingIndicator');
-            
+
             runButton.disabled = true;
-            runButton.innerHTML = 'Analyzing...';
+            runButton.innerHTML = "Analyzing...";
             loadingIndicator.classList.remove('hidden');
             imageReportOutput.innerHTML = `<p class="text-gray-500 italic p-4">Sending image and prompt to AI for structured report generation...</p>`;
             document.getElementById('copyButton').classList.add('hidden');
-            
             // Reset header style
-            reportHeader.className = `p-6 transition duration-300 bg-gray-100 text-gray-800`;
+            reportHeader.className = 'p-6 transition duration-300 bg-gray-100 text-gray-800';
             severityDisplay.textContent = 'Severity: Processing...';
 
 
             const payload = {
                 contents: [{
                     role: "user",
-                    parts: [
-                        { text: prompt },
-                        {
-                            inlineData: {
-                                mimeType: mimeType,
-                                data: imageBase64Data 
-                            }
+                    parts: [{
+                        text: prompt
+                    }, {
+                        inlineData: {
+                            mimeType: mimeType,
+                            data: imageBase64Data
                         }
-                    ]
+                    }]
                 }],
                 generationConfig: {
                     responseMimeType: "application/json",
-                    responseSchema: reportSchema
+                    responseSchema: reportSchema,
                 },
                 systemInstruction: {
-                    parts: [{ text: systemPrompt }]
+                    parts: [{
+                        text: systemPrompt
+                    }]
                 }
             };
-            
+
             const maxRetries = 5;
             let attempt = 0;
-            
             try {
                 while (attempt < maxRetries) {
                     attempt++;
                     try {
                         const response = await fetch(apiUrl, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
                             body: JSON.stringify(payload)
                         });
 
@@ -664,11 +664,11 @@
                             await new Promise(resolve => setTimeout(resolve, delay));
                             continue;
                         }
-                        
+
                         if (!response.ok) {
                             const errorBody = await response.text();
-                            console.error(`API Error Body (${response.status}):`, errorBody);
-                            throw new Error(`API call failed with status: ${response.status}`);
+                            console.error("API Error Body:", response.status, errorBody);
+                            throw new Error(`API call failed with status ${response.status}`);
                         }
 
                         const result = await response.json();
@@ -677,7 +677,6 @@
                         if (candidate && candidate.content?.parts?.[0]?.text) {
                             const jsonText = candidate.content.parts[0].text;
                             const reportJson = JSON.parse(jsonText);
-                            
                             imageReportOutput.innerHTML = formatReportHtml(reportJson);
                             document.getElementById('copyButton').dataset.reportText = JSON.stringify(reportJson, null, 2);
                             document.getElementById('copyButton').classList.remove('hidden');
@@ -685,22 +684,22 @@
                         } else {
                             throw new Error("Empty or malformed AI response received.");
                         }
-                        break;
+                        break; // Success, exit retry loop
                     } catch (error) {
-                        if (attempt === maxRetries) {
-                            throw error;
+                        if (attempt >= maxRetries) {
+                            throw error; // Rethrow after final attempt
                         }
                         const delay = getBackoffDelay(attempt);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
             } catch (error) {
-                console.error('Final API Error:', error);
+                console.error("Final API Error:", error);
                 imageReportOutput.innerHTML = `<p class="text-red-600 font-bold p-4">An error occurred: Failed to generate structured report. Check console for API error details.</p>`;
                 displayError("Analysis Failed", `Check console for details. Error: ${error.message}`);
             } finally {
                 runButton.disabled = false;
-                runButton.innerHTML = 'Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>';
+                runButton.innerHTML = `Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>`;
                 loadingIndicator.classList.add('hidden');
                 lucide.createIcons();
             }
@@ -715,7 +714,7 @@
             tempTextArea.value = reportText;
             document.body.appendChild(tempTextArea);
             tempTextArea.select();
-            
+
             try {
                 document.execCommand('copy');
                 copyButton.innerHTML = 'Copied!';
@@ -726,71 +725,77 @@
                 console.error('Failed to copy text: ', err);
                 copyButton.innerHTML = 'Copy Failed!';
             }
+
             document.body.removeChild(tempTextArea);
         }
 
-        // ====================================================================
-        // --- 5. MODULE 2: KNOWLEDGE BASE (Grounding Search) ---
-
+        // --- 5. MODULE 2: KNOWLEDGE BASE (Grounding/Search) ---
         function formatKbOutput(text, sources) {
             let html = `<div>${text.replace(/\n/g, '<br>')}</div>`;
             if (sources && sources.length > 0) {
-                html += '<div class="mt-4 pt-4 border-t border-gray-300">';
-                html += '<h5 class="font-semibold text-sm mb-2 text-indigo-700">Cited Sources:</h5>';
+                html += `<div class="mt-4 pt-4 border-t border-gray-300">`;
+                html += `<h5 class="font-semibold text-sm mb-2 text-indigo-700">Cited Sources</h5>`;
                 sources.forEach((s, index) => {
                     html += `<p class="text-xs text-gray-600 mb-1">
-                        <a href="${s.uri}" target="_blank" class="text-blue-600 hover:underline">
-                            ${index + 1}. ${s.title}
-                        </a>
+                        <a href="${s.uri}" target="_blank" class="text-blue-600 hover:underline">${index + 1}. ${s.title}</a>
                     </p>`;
                 });
-                html += '</div>';
+                html += `</div>`;
             }
             return html;
         }
 
         window.runKnowledgeBaseSearch = async function() {
-            if (!GEMINI_API_KEY) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
                 displayError("API Key Missing", "Please paste your Gemini API Key.");
                 return;
             }
-            
+
             const kbQuery = document.getElementById('kbQuery').value.trim();
             if (!kbQuery) {
                 displayError("Empty Query", "Please enter a medical query to search.");
                 return;
             }
-            
+
             const kbSearchButton = document.getElementById('kbSearchButton');
             const kbLoadingIndicator = document.getElementById('kbLoadingIndicator');
             const kbOutput = document.getElementById('kbOutput');
 
             kbSearchButton.disabled = true;
-            kbSearchButton.innerHTML = 'Searching...';
+            kbSearchButton.innerHTML = "Searching...";
             kbLoadingIndicator.classList.remove('hidden');
-            kbOutput.innerHTML = `<p class="text-gray-500 italic">Searching medical literature for: "${kbQuery}"...</p>`;
+            kbOutput.innerHTML = `<p class="text-gray-500 italic">Searching medical literature for "${kbQuery}"...</p>`;
 
             // Stricter system prompt to limit to medical topics only
             const systemPrompt = "You are a specialized medical literature search engine. You MUST only answer questions related to medicine, biology, or healthcare. If the query is non-medical (e.g., 'what is the capital of France'), you MUST politely decline and state that you are restricted to medical topics.";
 
             const payload = {
-                contents: [{ parts: [{ text: kbQuery }] }],
-                tools: [{ "google_search": {} }],
+                contents: [{
+                    parts: [{
+                        text: kbQuery
+                    }]
+                }],
+                tools: [{
+                    "googleSearch": {}
+                }],
                 systemInstruction: {
-                    parts: [{ text: systemPrompt }]
+                    parts: [{
+                        text: systemPrompt
+                    }]
                 },
             };
-            
+
             const maxRetries = 5;
             let attempt = 0;
-
             try {
-                 while (attempt < maxRetries) {
+                while (attempt < maxRetries) {
                     attempt++;
                     try {
                         const response = await fetch(apiUrl, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
                             body: JSON.stringify(payload)
                         });
 
@@ -802,18 +807,17 @@
 
                         if (!response.ok) {
                             const errorBody = await response.text();
-                            console.error(`API Error Body (${response.status}):`, errorBody);
-                            throw new Error(`API call failed with status: ${response.status}`);
+                            console.error("API Error Body:", response.status, errorBody);
+                            throw new Error(`API call failed with status ${response.status}`);
                         }
-                        
+
                         const result = await response.json();
                         const candidate = result.candidates?.[0];
 
                         if (candidate && candidate.content?.parts?.[0]?.text) {
                             const text = candidate.content.parts[0].text;
-                            let sources = [];
+                            let sources;
                             const groundingMetadata = candidate.groundingMetadata;
-                            
                             if (groundingMetadata && groundingMetadata.groundingAttributions) {
                                 sources = groundingMetadata.groundingAttributions
                                     .map(attribution => ({
@@ -822,15 +826,13 @@
                                     }))
                                     .filter(source => source.uri && source.title);
                             }
-                            
                             kbOutput.innerHTML = formatKbOutput(text, sources);
-
                         } else {
                             kbOutput.innerHTML = `<p class="text-red-600 font-bold">Error: AI did not return a valid response.</p>`;
                         }
                         break;
                     } catch (error) {
-                         if (attempt === maxRetries) {
+                        if (attempt >= maxRetries) {
                             throw error;
                         }
                         const delay = getBackoffDelay(attempt);
@@ -838,217 +840,108 @@
                     }
                 }
             } catch (error) {
-                console.error('Final KB Search API Error:', error);
+                console.error("Final KB Search API Error:", error);
                 kbOutput.innerHTML = `<p class="text-red-600 font-bold">An error occurred: Failed to search knowledge base. Check console for API error details.</p>`;
                 displayError("Search Failed", `Check console for details. Error: ${error.message}`);
             } finally {
                 kbSearchButton.disabled = false;
-                kbSearchButton.innerHTML = 'Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>';
+                kbSearchButton.innerHTML = `Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>`;
                 kbLoadingIndicator.classList.add('hidden');
                 lucide.createIcons();
             }
         }
 
-        // ====================================================================
-        // --- 6. MODULE 3: GENERAL DOCTOR AI (Conversational Chat) ---
 
-        /**
-         * Renders the current chat history to the UI.
-         */
-        function renderChat() {
-            const container = document.getElementById('chatHistoryContainer');
-            container.innerHTML = '';
-            
-            chatHistory.forEach(message => {
-                const isUser = message.role === 'user';
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `chat-message ${isUser ? 'user-message' : 'ai-message'} ${isUser ? 'text-gray-900' : 'text-gray-700'}`;
-                messageDiv.innerHTML = `<p class="${isUser ? 'font-medium' : 'prose text-sm'}">${message.parts[0].text}</p>`;
-                container.appendChild(messageDiv);
-            });
+        // --- REMOVED: MODULE 3 (GENERAL DOCTOR AI) ---
+        
 
-            // Scroll to the bottom of the chat container
-            container.scrollTop = container.scrollHeight;
-        }
+        // --- 7. MODULE 4: COMMUNICATION DRAFTING (UPDATED FOR REAL DICTATION) ---
+        const draftTopicTextarea = document.getElementById('draftTopic');
+        const dictationBanner = document.getElementById('dictationBanner');
 
-        function handleChatInputKeypress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
+        // *** NEW: SVG Icons for dictation button state
+        const micIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
+        const stopIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>`;
+
+        // *** NEW: Main dictation toggle logic
+        window.toggleDictation = function() {
+            if (isRecording) {
+                stopDictation();
+            } else {
+                startDictation();
             }
-        }
+        };
 
-        window.sendMessage = async function() {
-            if (!GEMINI_API_KEY) {
-                displayError("API Key Missing", "Please paste your Gemini API Key.");
+        // *** UPDATED: Start speech recognition
+        function startDictation() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                displayError("Browser Not Supported", "Speech recognition is not available in this browser.");
                 return;
             }
 
-            const chatInput = document.getElementById('chatInput');
-            const chatSendButton = document.getElementById('chatSendButton');
-            const chatLoadingIndicator = document.getElementById('chatLoadingIndicator');
-            const userInput = chatInput.value.trim();
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
 
-            if (!userInput) return;
+            // Store the current text to append to it
+            finalTranscript = draftTopicTextarea.value;
 
-            // 1. Add user message to history and UI
-            chatHistory.push({ role: "user", parts: [{ text: userInput }] });
-            renderChat();
-            
-            // 2. Clear input and disable
-            chatInput.value = '';
-            chatInput.disabled = true;
-            chatSendButton.disabled = true;
-            chatLoadingIndicator.classList.remove('hidden');
+            recognition.onstart = () => {
+                isRecording = true;
+                dictationButton.innerHTML = stopIconSVG;
+                dictationButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                dictationButton.classList.add('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
+                // dictationBanner.classList.remove('hidden'); // Banner removed as requested
+                // displayError("Dictation Started", "Real-time voice-to-text is now active."); // Popup message removed as requested
+            };
 
-            const chatPayload = {
-                contents: chatHistory,
-                tools: [{ "google_search": {} }],
-                systemInstruction: {
-                    parts: [{ text: "You are a helpful and knowledgeable medical assistant. Provide accurate, non-diagnostic information. Always remind the user that you are an AI and cannot replace a doctor." }]
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript + ' ';
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                draftTopicTextarea.value = finalTranscript + interimTranscript;
+                draftTopicTextarea.scrollTop = draftTopicTextarea.scrollHeight; // Auto-scroll
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech Recognition Error:", event.error);
+                displayError("Dictation Error", `Error: ${event.error}. Please try again.`);
+                stopDictation();
+            };
+
+            recognition.onend = () => {
+                // This is called automatically when speech stops or recognition.stop() is called
+                if (isRecording) { // Only reset UI if it wasn't an intentional stop
+                    stopDictation();
                 }
             };
 
-            const maxRetries = 5;
-            let attempt = 0;
-
-            try {
-                while (attempt < maxRetries) {
-                    attempt++;
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(chatPayload)
-                        });
-
-                        if (response.status === 429 && attempt < maxRetries) {
-                            const delay = getBackoffDelay(attempt);
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            continue;
-                        }
-
-                        if (!response.ok) {
-                            const errorBody = await response.text();
-                            console.error(`API Error Body (${response.status}):`, errorBody);
-                            throw new Error(`API call failed with status: ${response.status}`);
-                        }
-
-                        const result = await response.json();
-                        const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                        if (responseText) {
-                            // 3. Add AI response to history and UI
-                            chatHistory.push({ role: "model", parts: [{ text: responseText }] });
-                            renderChat();
-                        } else {
-                            throw new Error("AI did not return a valid response.");
-                        }
-                        break;
-                    } catch (error) {
-                        if (attempt === maxRetries) {
-                            throw error;
-                        }
-                        const delay = getBackoffDelay(attempt);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
-                }
-            } catch (error) {
-                console.error('Final Chat API Error:', error);
-                const errorMessage = "Sorry, I ran into an error. Please try again or refresh the page.";
-                chatHistory.push({ role: "model", parts: [{ text: errorMessage }] });
-                renderChat();
-                displayError("Chat Failed", `Error: ${error.message}`);
-            } finally {
-                // 4. Re-enable input
-                chatInput.disabled = false;
-                chatSendButton.disabled = false;
-                chatLoadingIndicator.classList.add('hidden');
-                chatInput.focus();
-                lucide.createIcons();
-            }
+            recognition.start();
         }
 
-        // ====================================================================
-        // --- 7. MODULE 4: COMMUNICATION DRAFTING (UPDATED FOR STREAMING SIMULATION) ---
-        
-        /**
-         * Simulates starting/stopping voice dictation for the drafting textarea.
-         */
-        window.toggleDictation = function(button) {
-            const isRecording = button.getAttribute('data-recording') === 'true';
-            const draftTopic = document.getElementById('draftTopic');
-            const micIconHtml = '<i data-lucide="mic" class="w-6 h-6"></i>';
-            const stopIconHtml = '<i data-lucide="square" class="w-6 h-6"></i>';
-
-            // Check if recording is currently active
-            if (isRecording) {
-                // --- STOP RECORDING SIMULATION ---
-                if (dictationInterval) {
-                    clearInterval(dictationInterval);
-                    dictationInterval = null;
-                }
-
-                button.setAttribute('data-recording', 'false');
-                button.classList.remove('bg-red-700', 'animate-pulse');
-                button.classList.add('bg-red-600', 'hover:bg-red-700');
-                button.innerHTML = micIconHtml;
-                
-                displayError("Dictation Ended", "Real-time transcription stopped.");
-
-            } else {
-                // --- START RECORDING SIMULATION ---
-                
-                // Only start if 'Radiology Report Draft' is selected (redundant check, but safe)
-                if (draftRecipientSelect.value !== 'Radiology Report Draft') {
-                    displayError("Dictation Restricted", "Dictation is only available for 'Radiology Report Draft' type.");
-                    return;
-                }
-
-                button.setAttribute('data-recording', 'true');
-                button.classList.remove('bg-red-600', 'hover:bg-red-700');
-                button.classList.add('bg-red-700', 'animate-pulse');
-                button.innerHTML = stopIconHtml;
-                
-                displayError("Dictation Started (Simulated)", "Real-time voice-to-text transcription is streaming... Click the square icon to stop.");
-
-                // Simulated dictated text (use LaTeX for math notation)
-                const simulatedText = "FINDINGS: There is a cavitary lesion measuring $3.5 \\text{ cm}$ in the right upper lobe, consistent with primary malignancy. No evidence of pleural effusion or lymphadenopathy. IMPRESSION: Right upper lobe mass, highly suspicious for bronchogenic carcinoma. Further biopsy is recommended.";
-
-                let charIndex = 0;
-                const typingSpeed = 30; // ms per character to simulate real-time typing
-
-                // Start with a new line if there's existing content
-                if (draftTopic.value) {
-                    draftTopic.value += '\n\n';
-                }
-                
-                // Start the streaming simulation
-                dictationInterval = setInterval(() => {
-                    if (charIndex < simulatedText.length) {
-                        // Append one character at a time
-                        draftTopic.value += simulatedText[charIndex];
-                        charIndex++;
-                        // Scroll to keep the cursor visible
-                        draftTopic.scrollTop = draftTopic.scrollHeight; 
-                    } else {
-                        // Auto-stop when text finishes streaming
-                        clearInterval(dictationInterval);
-                        dictationInterval = null;
-                        button.setAttribute('data-recording', 'false');
-                        button.classList.remove('bg-red-700', 'animate-pulse');
-                        button.classList.add('bg-red-600', 'hover:bg-red-700');
-                        button.innerHTML = micIconHtml;
-                        displayError("Dictation Complete", "Simulated dictation finished streaming.");
-                        lucide.createIcons();
-                    }
-                }, typingSpeed);
+        // *** UPDATED: Stop speech recognition
+        function stopDictation() {
+            if (recognition) {
+                recognition.stop();
             }
-            lucide.createIcons();
+            isRecording = false;
+            dictationButton.innerHTML = micIconSVG;
+            dictationButton.classList.remove('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
+            dictationButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            // dictationBanner.classList.add('hidden'); // Banner removed as requested
+            // displayError("Dictation Stopped", "Voice transcription has ended."); // Popup message removed
         }
+
 
         window.draftCommunication = async function() {
-            if (!GEMINI_API_KEY) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
                 displayError("API Key Missing", "Please paste your Gemini API Key.");
                 return;
             }
@@ -1057,10 +950,10 @@
             const draftTopic = document.getElementById('draftTopic').value.trim();
             const draftUrgency = document.getElementById('draftUrgency').value;
             const draftFormat = document.getElementById('draftFormat').value;
-            
+
             // Check if dictation is running and stop it before drafting
-            if (dictationButton.getAttribute('data-recording') === 'true') {
-                 toggleDictation(dictationButton); // Stops the simulation
+            if (isRecording) {
+                stopDictation();
             }
 
             if (!draftTopic) {
@@ -1073,31 +966,41 @@
             const draftOutput = document.getElementById('draftOutput');
 
             draftButton.disabled = true;
-            draftButton.innerHTML = 'Drafting...';
+            draftButton.innerHTML = "Drafting...";
             draftLoadingIndicator.classList.remove('hidden');
             draftOutput.innerHTML = `<p class="text-gray-500 italic">Generating ${draftFormat} for ${draftRecipient}...</p>`;
 
-            const systemPrompt = "You are a professional medical administrative assistant and report writer. Your task is to draft a clear, concise, and professional communication or report. Maintain a formal but helpful tone. Only output the letter/email/report content, no greetings or explanations outside the main body. Use LaTeX for any mathematical or scientific notation, e.g., 'The mass measures $4 \\text{ cm}$'.";
-            const userQuery = `Draft an ${draftUrgency} ${draftFormat} for the type: "${draftRecipient}". The main topic and details are: "${draftTopic}". Ensure the tone is appropriate for the recipient and format.`;
-            
+            const systemPrompt = "You are a professional medical administrative assistant and report writer. Your task is to draft a clear, concise, and professional communication or report. Maintain a formal but helpful tone. Only output the letter/email/report content, no greetings or explanations outside the main body. Use LaTeX for any mathematical or scientific notation, e.g., 'The mass measures \\(4 \\text{ cm}\\).'";
+            const userQuery = `Draft an ${draftUrgency} ${draftFormat} for the type: ${draftRecipient}. The main topic and details are: "${draftTopic}". Ensure the tone is appropriate for the recipient and format.`;
+
             const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "google_search": {} }],
+                contents: [{
+                    parts: [{
+                        text: userQuery
+                    }]
+                }],
+                tools: [{
+                    "googleSearch": {}
+                }],
                 systemInstruction: {
-                    parts: [{ text: systemPrompt }]
+                    parts: [{
+                        text: systemPrompt
+                    }]
                 },
             };
-            
+
+
             const maxRetries = 5;
             let attempt = 0;
-
             try {
-                 while (attempt < maxRetries) {
+                while (attempt < maxRetries) {
                     attempt++;
                     try {
                         const response = await fetch(apiUrl, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
                             body: JSON.stringify(payload)
                         });
 
@@ -1109,10 +1012,10 @@
 
                         if (!response.ok) {
                             const errorBody = await response.text();
-                            console.error(`API Error Body (${response.status}):`, errorBody);
-                            throw new Error(`API call failed with status: ${response.status}`);
+                            console.error("API Error Body:", response.status, errorBody);
+                            throw new Error(`API call failed with status ${response.status}`);
                         }
-                        
+
                         const result = await response.json();
                         const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
@@ -1123,7 +1026,7 @@
                         }
                         break;
                     } catch (error) {
-                         if (attempt === maxRetries) {
+                        if (attempt >= maxRetries) {
                             throw error;
                         }
                         const delay = getBackoffDelay(attempt);
@@ -1131,69 +1034,66 @@
                     }
                 }
             } catch (error) {
-                console.error('Final Drafting API Error:', error);
+                console.error("Final Drafting API Error:", error);
                 draftOutput.innerHTML = `<p class="text-red-600 font-bold">An error occurred: Failed to generate communication draft. Check console for API error details.</p>`;
                 displayError("Drafting Failed", `Check console for details. Error: ${error.message}`);
             } finally {
                 draftButton.disabled = false;
-                draftButton.innerHTML = 'Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>';
+                draftButton.innerHTML = `Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>`;
                 draftLoadingIndicator.classList.add('hidden');
                 lucide.createIcons();
             }
         }
 
 
-        // ====================================================================
         // --- 8. INITIALIZATION ON LOAD ---
-        
         window.onload = function() {
-             // 1. Initialize Firebase services
-             initializeFirebase();
-             
-             // 2. Load icons
-             lucide.createIcons();
+            // 1. Initialize Firebase services
+            initializeFirebase();
 
-             // 3. Set up initial views and navigation listeners
-             switchView('image-analysis');
-             navContainer.addEventListener('click', (e) => {
-                 const target = e.target.closest('.nav-item');
-                 if (target) {
-                     switchView(target.getAttribute('data-view'));
-                 }
-             });
+            // 2. Load icons
+            lucide.createIcons();
 
-             // 4. Initialize default prompt
-             promptInput.value = "Analyze the image for radiological findings. Provide a structured JSON output with fields 'impression', 'findings', 'recommendations', and 'severity'. Ensure the severity is accurately classified as either 'Normal Findings', 'Minor Findings', or 'Critical Findings'.";
-             
-             // 5. Setup drag-and-drop listener for Image Analysis
-             const dropArea = document.getElementById('dropArea');
-             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            // 3. Set up initial views and navigation listeners
+            switchView('image-analysis');
+            navContainer.addEventListener('click', (e) => {
+                const target = e.target.closest('.nav-item');
+                if (target) {
+                    switchView(target.getAttribute('data-view'));
+                }
+            });
+
+            // 4. Initialize default prompt
+            promptInput.value = "Analyze the image for radiological findings. Provide a structured JSON output with fields: impression, findings, recommendations, and severity. Ensure the severity is accurately classified as either 'Normal Findings', 'Minor Findings', or 'Critical Findings'.";
+
+            // 5. Setup drag-and-drop listener for Image Analysis
+            const dropArea = document.getElementById('dropArea');
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 dropArea.addEventListener(eventName, preventDefaults, false);
-             });
-             dropArea.addEventListener('drop', handleDrop, false);
+            });
+            dropArea.addEventListener('drop', handleDrop, false);
 
-             function preventDefaults(e) {
-                 e.preventDefault();
-                 e.stopPropagation();
-             }
-             
-             function handleDrop(e) {
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function handleDrop(e) {
                 const dt = e.dataTransfer;
                 const files = dt.files;
                 if (files.length > 0) {
                     fileInput.files = files;
                     fileInput.dispatchEvent(new Event('change'));
                 }
-             }
-
-             // 6. Initial chat render
-             renderChat();
-
-             // 7. Initialize Dictation Button Visibility
-             // The dropdown defaults to "Radiology Report Draft", so the button should be visible initially.
-             handleDraftRecipientChange(draftRecipientSelect.value);
+            }
+            
+            // REMOVED: Initial chat render
+            
+            // 7. Initialize Dictation Button Visibility and Icon
+            handleDraftRecipientChange(draftRecipientSelect.value);
+            dictationButton.innerHTML = micIconSVG;
         };
-
     </script>
 </body>
+
 </html>
