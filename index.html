@@ -1,954 +1,775 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical AI Hub</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical AI Hub</title>
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fc;
-            min-height: 100vh;
-        }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-        .sidebar {
-            width: 280px;
-            background-color: #ffffff;
-            border-right: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            height: 100vh;
-        }
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-        .main-content {
-            flex-grow: 1;
-            padding: 3rem;
-            max-width: calc(100% - 280px);
-        }
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            margin: 0.5rem 0;
-            cursor: pointer;
-            border-radius: 0.75rem;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+      min-height: 100vh;
+    }
 
-        .nav-item:hover {
-            background-color: #f3f4f6;
-        }
+    .sidebar {
+      width: 280px;
+      background-color: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
 
-        .nav-item.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
-        }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      margin: 0.5rem 0;
+      cursor: pointer;
+      border-radius: 0.75rem;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
 
-        .nav-item:not(.active) i {
-            color: #6b7280;
-            /* gray-500 */
-        }
+    .nav-item:hover { background-color: #f3f4f6; }
 
-        .nav-item.active i {
-            color: white;
-        }
+    .nav-item.active {
+      background-color: #3b82f6;
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5),
+                  0 4px 6px -2px rgba(59, 130, 246, 0.05);
+    }
 
-        .drag-drop-area {
-            border: 2px dashed #93c5fd;
-            background-color: #eff6ff;
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.75rem;
-            cursor: pointer;
-            transition: border-color 0.3s;
-        }
+    .nav-item:not(.active) i { color: #6b7280; }
+    .nav-item.active i { color: white; }
 
-        .drag-drop-area:hover {
-            border-color: #3b82f6;
-        }
-        
-        /* UPDATED: Styles for the image gallery preview */
-        .image-gallery {
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 0.5rem;
-            background-color: #f3f4f6;
-            border-radius: 0.5rem;
-            min-height: 120px;
-        }
+    .drag-drop-area {
+      border: 2px dashed #93c5fd;
+      background-color: #eff6ff;
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
 
-        .gallery-thumbnail {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 0.5rem;
-            border: 2px solid #d1d5db;
-            flex-shrink: 0;
-        }
+    .drag-drop-area:hover { border-color: #3b82f6; }
 
-        .report-section {
-            padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
+    .report-section { padding: 1rem; border-bottom: 1px solid #e5e7eb; }
+    .report-section:last-child { border-bottom: none; }
 
-        .report-section:last-child {
-            border-bottom: none;
-        }
+    .image-gallery {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 0.5rem;
+      background-color: #f3f4f6;
+      border-radius: 0.5rem;
+      min-height: 120px;
+    }
 
-        .chat-message {
-            max-width: 80%;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            margin-bottom: 1rem;
-        }
+    .gallery-thumbnail {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      border: 2px solid #d1d5db;
+      flex-shrink: 0;
+    }
 
-        .user-message {
-            background-color: #dbeafe;
-            /* blue-100 */
-            align-self: flex-end;
-            margin-left: auto;
-        }
-
-        .ai-message {
-            background-color: #ffffff;
-            border: 1px solid #e5e7eb;
-            align-self: flex-start;
-            margin-right: auto;
-        }
-
-        .chat-container {
-            height: calc(100vh - 270px);
-            /* Adjusted for headers and input */
-            overflow-y: auto;
-        }
-    </style>
-    <!-- Lucide icons for visual elements -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    @media (max-width: 1023px) {
+      .main-content { max-width: 100%; padding: 1rem; }
+    }
+  </style>
 </head>
 
-<body class="flex">
-    <!-- Sidebar Navigation -->
-    <div class="sidebar p-6 flex flex-col justify-between">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900 mb-10">Medical AI Hub</h1>
-            <nav id="nav-container">
-                <div class="nav-item active" data-view="image-analysis">
-                    <i data-lucide="scan" class="w-5 h-5 mr-3"></i> AI Image Analysis
-                </div>
-                <div class="nav-item text-gray-600" data-view="knowledge-base">
-                    <i data-lucide="book-open-text" class="w-5 h-5 mr-3"></i> Knowledge Base
-                </div>
-                <div class="nav-item text-gray-600" data-view="communication">
-                    <i data-lucide="messages-square" class="w-5 h-5 mr-3"></i> Communication Drafting
-                </div>
-            </nav>
-        </div>
-        <!-- Error Message Placeholder -->
-        <div id="errorMessage" class="hidden fixed bottom-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50" role="alert">
-            <p class="font-bold" id="errorTitle">Something went wrong</p>
-            <p class="text-sm" id="errorDetail">There was a problem running your code.</p>
-        </div>
+<body class="min-h-screen bg-slate-50">
+  <!-- Mobile Header -->
+  <header class="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-200">
+    <div class="flex items-center justify-between px-4 py-3">
+      <button id="mobileMenuBtn" class="p-2 rounded-md border border-slate-200" aria-label="Open menu">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+      <h1 class="text-lg font-semibold text-slate-900">Medical AI Hub</h1>
+      <span class="w-8"></span>
     </div>
+  </header>
 
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <h2 id="mainTitle" class="text-4xl font-bold text-gray-900 mb-8">AI Image Analysis</h2>
+  <div class="flex">
+    <!-- Sidebar as mobile drawer -->
+    <aside id="mobileDrawer" class="sidebar fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 shadow-xl transform -translate-x-full transition-transform duration-200 ease-out lg:translate-x-0 lg:static lg:shadow-none lg:w-[280px] p-6 flex flex-col justify-between">
+      <div>
+        <h1 class="text-2xl font-extrabold text-gray-900 mb-6 hidden lg:block">Medical AI Hub</h1>
+        <nav id="nav-container">
+          <div class="nav-item active" data-view="image-analysis">
+            <i data-lucide="scan" class="w-5 h-5 mr-3"></i> AI Image Analysis
+          </div>
+          <div class="nav-item text-gray-600" data-view="knowledge-base">
+            <i data-lucide="book-open-text" class="w-5 h-5 mr-3"></i> Knowledge Base
+          </div>
+          <div class="nav-item text-gray-600" data-view="communication">
+            <i data-lucide="messages-square" class="w-5 h-5 mr-3"></i> Communication Drafting
+          </div>
+        </nav>
+      </div>
 
-        <!-- All views are contained here. Only the active view will be displayed via JS. -->
-        <div id="viewContainer">
+      <!-- Error message -->
+      <div id="errorMessage" class="hidden fixed bottom-4 left-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50" role="alert">
+        <p class="font-bold" id="errorTitle">Something went wrong</p>
+        <p class="text-sm" id="errorDetail">There was a problem running your code.</p>
+      </div>
+    </aside>
 
-            <!-- =================================== -->
-            <!-- 1. AI IMAGE ANALYSIS VIEW (UPDATED) -->
-            <!-- =================================== -->
-            <div id="image-analysis-view" class="grid lg:grid-cols-2 gap-8 view-content">
-                <!-- Input Panel (Left) -->
-                <div class="bg-white p-8 rounded-xl shadow-lg h-full">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-6">Image Input</h3>
+    <!-- Main content -->
+    <main class="main-content w-full px-4 sm:px-6 lg:px-12 py-6 lg:py-12">
+      <h2 id="mainTitle" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 lg:mb-8">AI Image Analysis</h2>
 
-                    <!-- File Upload/Drag and Drop Area -->
-                    <div id="dropArea" class="drag-drop-area mb-4 p-6" onclick="document.getElementById('fileInput').click()">
-                        <!-- UPDATED: Added 'multiple' attribute to allow multi-file selection -->
-                        <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)" multiple>
-                        <i data-lucide="upload" class="w-8 h-8 text-blue-500 mb-2"></i>
-                        <p class="text-blue-700 font-medium">Upload Images (X-Ray, CT, MRI series)</p>
-                        <p class="text-sm text-gray-500 mt-1">Click to select or drag and drop files here</p>
-                    </div>
+      <div id="viewContainer">
+        <!-- AI IMAGE ANALYSIS -->
+        <div id="image-analysis-view" class="grid gap-6 sm:gap-8 md:grid-cols-1 lg:grid-cols-2 view-content">
+          <!-- Left: inputs -->
+          <div class="bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-lg h-full">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">Image Input</h3>
 
-                    <!-- UPDATED: Image Gallery Preview for multiple images -->
-                    <div id="imagePreviewContainer" class="hidden mb-6">
-                        <p class="text-sm font-medium text-gray-700 mb-2">Uploaded Images:</p>
-                        <div id="imageGallery" class="image-gallery">
-                            <!-- Thumbnails will be injected here by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Text Prompt Input -->
-                    <label for="promptInput" class="block text-sm font-medium text-gray-700 mb-2">Analysis Prompt</label>
-                    <textarea id="promptInput" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition resize-none" placeholder="Analyze the image series..."></textarea>
-
-                    <!-- Run Button -->
-                    <button onclick="runAnalysis()" id="runButton" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-lg transform hover:scale-1.01 disabled:opacity-50" disabled>
-                        Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>
-                    </button>
-                    <div id="imageAnalysisLoadingIndicator" class="mt-4 text-center text-blue-600 font-medium hidden">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Analyzing images...
-                    </div>
-                </div>
-
-                <!-- Output Panel (Right) -->
-                <div class="bg-white rounded-xl shadow-lg h-full overflow-hidden">
-                    <div id="reportHeader" class="p-6 transition duration-300 bg-gray-100">
-                        <h3 class="text-xl font-semibold mb-1 text-gray-800">Structured Report</h3>
-                        <p id="severityDisplay" class="text-sm font-medium text-gray-500">Severity: Awaiting Analysis</p>
-                    </div>
-
-                    <div id="imageReportOutput" class="min-h-[400px] bg-gray-50 p-4 border-t border-gray-200 overflow-y-auto">
-                        <p class="text-gray-500 italic p-4">Upload one or more images and click "Run AI Analysis" to generate a structured radiological report.</p>
-                    </div>
-                    <div class="p-6 pt-0">
-                        <button onclick="copyReport()" id="copyButton" class="w-full mt-3 bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 transition shadow-lg hidden">
-                            Copy Report Text (JSON)
-                        </button>
-                    </div>
-                </div>
+            <div id="dropArea" class="drag-drop-area mb-4 p-6" onclick="document.getElementById('fileInput').click()">
+              <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)" multiple>
+              <i data-lucide="upload" class="w-8 h-8 text-blue-500 mb-2"></i>
+              <p class="text-blue-700 font-medium">Upload Images (X-Ray, CT, MRI series)</p>
+              <p class="text-sm text-gray-500 mt-1">Click to select or drag and drop files here</p>
             </div>
 
-            <!-- =================================== -->
-            <!-- 2. KNOWLEDGE BASE VIEW              -->
-            <!-- =================================== -->
-            <div id="knowledge-base-view" class="hidden view-content">
-                <div class="lg:grid lg:grid-cols-2 lg:gap-8">
-                    <div class="bg-white p-8 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Search Medical Literature (Grounding)</h3>
-                        <label for="kbQuery" class="block text-sm font-medium text-gray-700 mb-2">Enter Medical Query</label>
-                        <textarea id="kbQuery" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition resize-none" placeholder="e.g., What is the standard treatment protocol for stage II non-small cell lung cancer?"></textarea>
-                        <button onclick="runKnowledgeBaseSearch()" id="kbSearchButton" class="w-full mt-6 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition shadow-lg transform hover:scale-1.01">
-                            Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>
-                        </button>
-                        <div id="kbLoadingIndicator" class="mt-4 text-center text-indigo-600 font-medium hidden">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Searching...
-                        </div>
-                    </div>
-                    <div class="bg-white p-8 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Grounding Results</h3>
-                        <div id="kbOutput" class="min-h-[400px] bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto">
-                            <p class="text-gray-500 italic">Results from medical literature searches will appear here, complete with citations.</p>
-                        </div>
-                    </div>
-                </div>
+            <div id="imagePreviewContainer" class="hidden mb-4 sm:mb-6">
+              <p class="text-sm font-medium text-gray-700 mb-2">Uploaded Images:</p>
+              <div id="imageGallery" class="image-gallery max-w-full overflow-x-auto"></div>
             </div>
 
-            <!-- ======================================================= -->
-            <!-- 4. COMMUNICATION DRAFTING VIEW -->
-            <!-- ======================================================= -->
-            <div id="communication-view" class="hidden view-content">
-                <div class="lg:grid lg:grid-cols-2 lg:gap-8">
-                    <!-- Input Form (Left) -->
-                    <div class="bg-white p-8 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Drafting Parameters</h3>
+            <label for="promptInput" class="block text-sm font-medium text-gray-700 mb-2">Analysis Prompt</label>
+            <textarea id="promptInput" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition resize-none" placeholder="Analyze the image series for radiological findings. Provide a structured JSON with 'impression', 'findings', 'recommendations', and 'severity'."></textarea>
 
-                        <div id="dictationBanner" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg text-center text-sm font-medium">
-                            🔴 Dictation is active. Click the square to stop.
-                        </div>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label for="draftRecipient" class="block text-sm font-medium text-gray-700">Communication Type</label>
-                                <select id="draftRecipient" onchange="handleDraftRecipientChange(this.value)" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
-                                    <option value="Referring Physician Update">Referring Physician Update/Referral</option>
-                                    <option value="Patient Follow-up">Patient Follow-up/Education</option>
-                                    <option value="Radiology Report Draft" selected>Radiology Report Draft</option>
-                                    <option value="Clinic Administrator">Clinic Administrator Request/Report</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="draftTopic" class="block text-sm font-medium text-gray-700">Communication Topic/Details</label>
-                                <div class="flex items-end space-x-2">
-                                    <textarea id="draftTopic" rows="5" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 transition resize-none" placeholder="e.g., Patient is J. Doe. Needs urgent consultation for a newly diagnosed renal mass (7cm, left kidney). For Radiology Reports, list the study and findings here."></textarea>
-                                    <button onclick="toggleDictation()" id="dictationButton" class="mic-btn p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 shadow-md flex-shrink-0" data-recording="false" title="Start Dictation">
-                                        <!-- SVG icon will be injected by JS -->
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="flex space-x-4">
-                                <div class="flex-1">
-                                    <label for="draftUrgency" class="block text-sm font-medium text-gray-700">Urgency</label>
-                                    <select id="draftUrgency" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
-                                        <option value="Urgent">Urgent</option>
-                                        <option value="Standard">Standard</option>
-                                        <option value="Routine">Routine</option>
-                                    </select>
-                                </div>
-                                <div class="flex-1">
-                                    <label for="draftFormat" class="block text-sm font-medium text-gray-700">Format/Length</label>
-                                    <select id="draftFormat" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
-                                        <option value="Short Email">Short Email</option>
-                                        <option value="Detailed Letter">Detailed Letter</option>
-                                        <option value="Progress Note">Progress Note</option>
-                                        <option value="Report (Long)">Report (Long)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button onclick="draftCommunication()" id="draftButton" class="w-full mt-6 bg-teal-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-teal-700 transition shadow-lg transform hover:scale-1.01">
-                            Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>
-                        </button>
-                        <div id="draftLoadingIndicator" class="mt-4 text-center text-teal-600 font-medium hidden">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-teal-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Drafting communication...
-                        </div>
-                    </div>
-
-                    <!-- Output Panel (Right) -->
-                    <div class="bg-white p-8 rounded-xl shadow-lg">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Generated Draft</h3>
-                        <div id="draftOutput" class="min-h-[400px] bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto whitespace-pre-wrap text-gray-800">
-                            <p class="text-gray-500 italic">Configure the parameters and click 'Generate Draft' to create a professional communication.</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="mt-6">
+              <button onclick="runAnalysis()" id="runButton" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition shadow-lg disabled:opacity-50" disabled>
+                Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>
+              </button>
             </div>
 
-        </div> <!-- End viewContainer -->
-    </div> <!-- End main-content -->
+            <div id="imageAnalysisLoadingIndicator" class="mt-4 text-center text-blue-600 font-medium hidden">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Analyzing images...
+            </div>
+          </div>
 
+          <!-- Right: output -->
+          <div class="bg-white rounded-xl shadow-lg h-full overflow-hidden">
+            <div id="reportHeader" class="p-6 transition duration-300 bg-gray-100">
+              <h3 class="text-xl font-semibold mb-1 text-gray-800">Structured Report</h3>
+              <p id="severityDisplay" class="text-sm font-medium text-gray-500">Severity: Awaiting Analysis</p>
+            </div>
 
-    <!-- =========================================================== -->
-    <!-- JavaScript for Firebase, Gemini API Call, and UI Logic      -->
-    <!-- =========================================================== -->
-    <script type="module">
-        import {
-            initializeApp
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import {
-            getAuth,
-            signInAnonymously,
-            signInWithCustomToken,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import {
-            getFirestore
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            <div id="imageReportOutput" class="min-h-[260px] sm:min-h-[320px] lg:min-h-[400px] bg-gray-50 p-3 sm:p-4 border-t border-gray-200 overflow-y-auto rounded-b-lg">
+              <p class="text-gray-500 italic p-2">Upload one or more images and click "Run AI Analysis" to generate a structured radiological report.</p>
+            </div>
 
+            <div class="p-6 pt-0">
+              <button onclick="copyReport()" id="copyButton" class="w-full mt-3 bg-green-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-green-700 transition shadow-lg hidden">
+                Copy Report Text (JSON)
+              </button>
+            </div>
+          </div>
+        </div>
 
-        // --- 1. MANDATORY GLOBAL VARIABLES & CONFIGURATION ---
-        const appId = typeof app_id !== 'undefined' ? app_id : 'default-medical-ai-hub';
-        const firebaseConfig = typeof firebase_config !== 'undefined' ? JSON.parse(firebase_config) : null;
-        const initialAuthToken = typeof initial_auth_token !== 'undefined' ? initial_auth_token : null;
+        <!-- KNOWLEDGE BASE -->
+        <div id="knowledge-base-view" class="hidden view-content">
+          <div class="grid gap-6 sm:gap-8 md:grid-cols-1 lg:grid-cols-2">
+            <div class="bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-lg">
+              <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Search Medical Literature (Grounding)</h3>
+              <label for="kbQuery" class="block text-sm font-medium text-gray-700 mb-2">Enter Medical Query</label>
+              <textarea id="kbQuery" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition resize-none" placeholder="e.g., What is the standard treatment for stage II NSCLC?"></textarea>
+              <button onclick="runKnowledgeBaseSearch()" id="kbSearchButton" class="w-full mt-6 bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition shadow-lg">
+                Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>
+              </button>
+              <div id="kbLoadingIndicator" class="mt-4 text-center text-indigo-600 font-medium hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Searching...
+              </div>
+            </div>
+            <div class="bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-lg">
+              <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Grounding Results</h3>
+              <div id="kbOutput" class="min-h-[400px] bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto">
+                <p class="text-gray-500 italic">Results from medical literature searches will appear here, with citations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        const GEMINI_API_KEY = "AIzaSyA0yEml30Y1NItvJ5hZoLKi0EnMTLIgNng";
-        const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+        <!-- COMMUNICATION DRAFTING -->
+        <div id="communication-view" class="hidden view-content">
+          <div class="grid gap-6 sm:gap-8 md:grid-cols-1 lg:grid-cols-2">
+            <div class="bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-lg">
+              <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Drafting Parameters</h3>
 
-        let app, db, auth;
-        let userId = null;
-        // UPDATED: imageBase64Data is now an array to store multiple images
-        let imageBase64Data = [];
+              <div id="dictationBanner" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg text-center text-sm font-medium">
+                🔴 Dictation is active. Click the square to stop.
+              </div>
 
-        // Dictation state variables
-        let recognition;
-        let isRecording = false;
-        let finalTranscript = '';
+              <div class="space-y-4">
+                <div>
+                  <label for="draftRecipient" class="block text-sm font-medium text-gray-700">Communication Type</label>
+                  <select id="draftRecipient" onchange="handleDraftRecipientChange(this.value)" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                    <option value="Referring Physician Update">Referring Physician Update/Referral</option>
+                    <option value="Patient Follow-up">Patient Follow-up/Education</option>
+                    <option value="Radiology Report Draft" selected>Radiology Report Draft</option>
+                    <option value="Clinic Administrator">Clinic Administrator Request/Report</option>
+                  </select>
+                </div>
 
+                <div>
+                  <label for="draftTopic" class="block text-sm font-medium text-gray-700">Communication Topic/Details</label>
+                  <div class="flex items-end gap-2 flex-wrap">
+                    <textarea id="draftTopic" rows="5" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 transition resize-none" placeholder="e.g., Patient is J. Doe. Needs urgent consultation..."></textarea>
+                    <button onclick="toggleDictation()" id="dictationButton" class="mic-btn w-full sm:w-auto p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 shadow-md" data-recording="false" title="Start Dictation"></button>
+                  </div>
+                </div>
 
-        // DOM elements
-        const fileInput = document.getElementById('fileInput');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const imageGallery = document.getElementById('imageGallery');
-        const promptInput = document.getElementById('promptInput');
-        const imageReportOutput = document.getElementById('imageReportOutput');
-        const runButton = document.getElementById('runButton');
-        const errorTitle = document.getElementById('errorTitle');
-        const errorDetail = document.getElementById('errorDetail');
-        const errorMessage = document.getElementById('errorMessage');
-        const reportHeader = document.getElementById('reportHeader');
-        const severityDisplay = document.getElementById('severityDisplay');
-        const mainTitle = document.getElementById('mainTitle');
-        const viewContainer = document.getElementById('viewContainer');
-        const navContainer = document.getElementById('nav-container');
-        const draftRecipientSelect = document.getElementById('draftRecipient');
-        const dictationButton = document.getElementById('dictationButton');
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <div class="flex-1">
+                    <label for="draftUrgency" class="block text-sm font-medium text-gray-700">Urgency</label>
+                    <select id="draftUrgency" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                      <option value="Urgent">Urgent</option>
+                      <option value="Standard">Standard</option>
+                      <option value="Routine">Routine</option>
+                    </select>
+                  </div>
+                  <div class="flex-1">
+                    <label for="draftFormat" class="block text-sm font-medium text-gray-700">Format/Length</label>
+                    <select id="draftFormat" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                      <option value="Short Email">Short Email</option>
+                      <option value="Detailed Letter">Detailed Letter</option>
+                      <option value="Progress Note">Progress Note</option>
+                      <option value="Report (Long)">Report (Long)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
+              <button onclick="draftCommunication()" id="draftButton" class="w-full mt-6 bg-teal-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-teal-700 transition shadow-lg">
+                Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>
+              </button>
+              <div id="draftLoadingIndicator" class="mt-4 text-center text-teal-600 font-medium hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-teal-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Drafting communication...
+              </div>
+            </div>
 
-        // --- 2. FIREBASE INITIALIZATION & AUTHENTICATION (MANDATORY) ---
-        async function initializeFirebase() {
-            if (!firebaseConfig) {
-                console.error("Firebase configuration is missing.");
-                return;
-            }
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+            <div class="bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-lg">
+              <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">Generated Draft</h3>
+              <div id="draftOutput" class="min-h-[400px] bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-y-auto whitespace-pre-wrap text-gray-800">
+                <p class="text-gray-500 italic">Configure the parameters and click 'Generate Draft' to create a professional communication.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- /viewContainer -->
+    </main>
+  </div> <!-- /layout -->
 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+  <!-- App Logic -->
+  <script type="module">
+    // IMPORTANT: Replace the direct Gemini API call with your backend proxy in production.
+    // const apiUrl = 'http://localhost:3000/api/generate';
+    const GEMINI_API_KEY = "AIzaSyA0yEml30Y1NItvJ5hZoLKi0EnMTLIgNng"; // Remove when proxying through backend.
+    const MODEL_NAME = "gemini-2.0-flash-lite";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        console.log("Authenticated User ID:", userId);
-                    } else {
-                        userId = null;
-                        console.log("User signed out.");
-                    }
-                });
+    // Minimal placeholders for Firebase (optional)
+    async function initializeFirebase() {
+      // No-op here; plug in actual Firebase init if required.
+      return;
+    }
 
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-            }
-        }
+    // State
+    let imageBase64Data = []; // array of { mimeType, data }
+    let recognition = null;
+    let isRecording = false;
+    let finalTranscript = '';
 
+    // Elements
+    const navContainer = document.getElementById('nav-container');
+    const mainTitle = document.getElementById('mainTitle');
+    const viewContainer = document.getElementById('viewContainer');
+    const fileInput = document.getElementById('fileInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imageGallery = document.getElementById('imageGallery');
+    const promptInput = document.getElementById('promptInput');
+    const runButton = document.getElementById('runButton');
+    const imageAnalysisLoadingIndicator = document.getElementById('imageAnalysisLoadingIndicator');
+    const imageReportOutput = document.getElementById('imageReportOutput');
+    const reportHeader = document.getElementById('reportHeader');
+    const severityDisplay = document.getElementById('severityDisplay');
+    const copyButton = document.getElementById('copyButton');
+    const kbSearchButton = document.getElementById('kbSearchButton');
+    const kbLoadingIndicator = document.getElementById('kbLoadingIndicator');
+    const kbOutput = document.getElementById('kbOutput');
+    const draftRecipientSelect = document.getElementById('draftRecipient');
+    const dictationButton = document.getElementById('dictationButton');
+    const dictationBanner = document.getElementById('dictationBanner');
+    const draftButton = document.getElementById('draftButton');
+    const draftLoadingIndicator = document.getElementById('draftLoadingIndicator');
+    const draftOutput = document.getElementById('draftOutput');
+    const errorTitle = document.getElementById('errorTitle');
+    const errorDetail = document.getElementById('errorDetail');
+    const errorMessage = document.getElementById('errorMessage');
 
-        // --- 3. UI, UTILITY, and NAVIGATION ---
+    const micIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
+    const stopIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>`;
 
-        /**
-         * Switches the active content view based on the navigation item clicked.
-         */
-        window.switchView = function(viewName) {
-            document.querySelectorAll('.view-content').forEach(view => view.classList.add('hidden'));
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active', 'text-gray-600');
-                if (item.getAttribute('data-view') !== viewName) {
-                    item.classList.add('text-gray-600');
-                }
-            });
+    // Utility
+    function displayError(title, detail) {
+      errorTitle.textContent = title;
+      errorDetail.textContent = detail;
+      errorMessage.classList.remove('hidden');
+      setTimeout(() => errorMessage.classList.add('hidden'), 5000);
+    }
 
-            const targetView = document.getElementById(`${viewName}-view`);
-            if (targetView) {
-                targetView.classList.remove('hidden');
-                document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
-            }
+    function getBackoffDelay(attempt) {
+      return Math.min(30000, (2 ** attempt) * 1000);
+    }
 
-            const titleMap = {
-                'image-analysis': 'AI Image Analysis',
-                'knowledge-base': 'Medical Knowledge Base',
-                'communication': 'Communication Drafting'
-            };
-            mainTitle.textContent = titleMap[viewName] || 'Medical AI Hub';
-            
-            if (viewName === 'communication') {
-                handleDraftRecipientChange(draftRecipientSelect.value);
-            } else if (isRecording) {
-                stopDictation();
-            }
-        }
+    // View switching
+    function switchView(viewName) {
+      document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+      const targetView = document.getElementById(`${viewName}-view`);
+      if (targetView) targetView.classList.remove('hidden');
 
-        /**
-         * UPDATED: Handles multiple file selections, converts to Base64, and updates UI.
-         */
-        window.handleFileSelect = function(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) {
-                imageBase64Data = [];
-                runButton.disabled = true;
-                imagePreviewContainer.classList.add('hidden');
-                imageGallery.innerHTML = '';
-                return;
-            }
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active', 'text-gray-600');
+        if (item.getAttribute('data-view') !== viewName) item.classList.add('text-gray-600');
+      });
+      const activeItem = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+      if (activeItem) activeItem.classList.add('active');
 
-            // Reset array and UI
-            imageBase64Data = [];
-            imageGallery.innerHTML = '';
-            imagePreviewContainer.classList.remove('hidden');
-            runButton.disabled = false;
-            
-            // Process each file
-            Array.from(files).forEach(file => {
-                if (!file.type.startsWith('image/')) return;
+      const titleMap = {
+        'image-analysis': 'AI Image Analysis',
+        'knowledge-base': 'Medical Knowledge Base',
+        'communication': 'Communication Drafting'
+      };
+      mainTitle.textContent = titleMap[viewName] || 'Medical AI Hub';
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64 = e.target.result;
-                    
-                    // Store the Base64 data and MIME type
-                    imageBase64Data.push({
-                        mimeType: file.type,
-                        data: base64.split(',')[1]
-                    });
+      if (viewName === 'communication') {
+        handleDraftRecipientChange(draftRecipientSelect.value);
+      } else if (isRecording) {
+        stopDictation();
+      }
+    }
 
-                    // Create and display a thumbnail
-                    const img = document.createElement('img');
-                    img.src = base64;
-                    img.className = 'gallery-thumbnail';
-                    img.alt = file.name;
-                    imageGallery.appendChild(img);
-                    
-                    console.log(`Image loaded: ${file.name}, MIME Type: ${file.type}`);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
+    // File handling
+    window.handleFileSelect = function (event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) {
+        imageBase64Data = [];
+        runButton.disabled = true;
+        imagePreviewContainer.classList.add('hidden');
+        imageGallery.innerHTML = '';
+        return;
+      }
+      imageBase64Data = [];
+      imageGallery.innerHTML = '';
+      imagePreviewContainer.classList.remove('hidden');
+      runButton.disabled = false;
 
-        /**
-         * Implements exponential backoff for retrying API requests.
-         */
-        function getBackoffDelay(attempt) {
-            return Math.min(30000, (2 ** attempt) * 1000);
-        }
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target.result;
+          imageBase64Data.push({ mimeType: file.type, data: base64.split(',')[1] });
 
-        /**
-         * Displays a temporary error message in the corner.
-         */
-        function displayError(title, detail) {
-            errorTitle.textContent = title;
-            errorDetail.textContent = detail;
-            errorMessage.classList.remove('hidden');
-            setTimeout(() => errorMessage.classList.add('hidden'), 5000);
-        }
-
-        window.handleDraftRecipientChange = function(selectedValue) {
-            if (selectedValue === 'Radiology Report Draft') {
-                dictationButton.classList.remove('hidden');
-            } else {
-                dictationButton.classList.add('hidden');
-                if (isRecording) {
-                    stopDictation();
-                }
-            }
-        }
-
-        lucide.createIcons();
-
-        // --- 4. MODULE 1: IMAGE ANALYSIS (Multimodal/Structured Output) ---
-        const reportSchema = {
-            type: "OBJECT",
-            properties: {
-                impression: { type: "STRING", description: "The final diagnostic summary or conclusion of the radiological findings." },
-                findings: { type: "STRING", description: "Detailed, objective description of the radiological observations across the image series." },
-                recommendations: { type: "STRING", description: "Suggested follow-up studies, clinical correlation, or patient management steps." },
-                severity: { type: "STRING", description: "Classification of the findings' severity. MUST be one of 'Normal Findings', 'Minor Findings', or 'Critical Findings'." },
-            },
-            required: ["impression", "findings", "recommendations", "severity"],
-            propertyOrdering: ["impression", "findings", "recommendations", "severity"]
+          const img = document.createElement('img');
+          img.src = base64;
+          img.className = 'gallery-thumbnail';
+          img.alt = file.name;
+          imageGallery.appendChild(img);
         };
+        reader.readAsDataURL(file);
+      });
+    }
 
+    // Dictation
+    function startDictation() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        displayError("Browser Not Supported", "Speech recognition is not available in this browser.");
+        return;
+      }
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      finalTranscript = document.getElementById('draftTopic').value;
 
-        function formatReportHtml(reportJson) {
-            const severity = reportJson.severity ? reportJson.severity.toLowerCase() : 'unknown';
-            let severityClass = 'bg-gray-100 text-gray-800';
-            let severityTextColor = 'text-gray-700';
-            let severityText = 'Severity: Unclassified';
+      recognition.onstart = () => {
+        isRecording = true;
+        dictationButton.innerHTML = stopIconSVG;
+        dictationButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        dictationButton.classList.add('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
+      };
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript + ' ';
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const ta = document.getElementById('draftTopic');
+        ta.value = finalTranscript + interimTranscript;
+        ta.scrollTop = ta.scrollHeight;
+      };
+      recognition.onerror = (event) => {
+        displayError("Dictation Error", `Error: ${event.error}. Please try again.`);
+        stopDictation();
+      };
+      recognition.onend = () => {
+        if (isRecording) stopDictation();
+      };
+      recognition.start();
+    }
 
-            if (severity.includes('normal')) {
-                severityClass = 'bg-green-100 text-green-800';
-                severityTextColor = 'text-green-700';
-                severityText = 'Severity: Normal Findings';
-            } else if (severity.includes('minor')) {
-                severityClass = 'bg-yellow-100 text-yellow-800';
-                severityTextColor = 'text-yellow-700';
-                severityText = 'Severity: Minor Findings';
-            } else if (severity.includes('critical')) {
-                severityClass = 'bg-red-100 text-red-800';
-                severityTextColor = 'text-red-700';
-                severityText = 'Severity: Critical Findings';
+    function stopDictation() {
+      if (recognition) recognition.stop();
+      isRecording = false;
+      dictationButton.innerHTML = micIconSVG;
+      dictationButton.classList.remove('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
+      dictationButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    }
+
+    window.toggleDictation = function () {
+      if (isRecording) stopDictation();
+      else startDictation();
+    }
+
+    window.handleDraftRecipientChange = function (val) {
+      if (val === 'Radiology Report Draft') {
+        dictationButton.classList.remove('hidden');
+      } else {
+        dictationButton.classList.add('hidden');
+        if (isRecording) stopDictation();
+      }
+    }
+
+    // Analysis
+    window.runAnalysis = async function () {
+      if (!apiUrl.includes('http')) {
+        displayError("API URL Missing", "Please configure the API endpoint.");
+        return;
+      }
+      if (apiUrl.includes('key=PASTE_YOUR_GEMINI_API_KEY_HERE')) {
+        displayError("API Key Missing", "Use a backend proxy or add a valid key for testing.");
+        return;
+      }
+      if (imageBase64Data.length === 0) {
+        displayError("No Images Selected", "Please upload one or more medical images.");
+        return;
+      }
+
+      const systemPrompt = "You are a specialized medical imaging AI. Analyze the uploaded series and the user's prompt to generate a consolidated, structured radiological report. Severity must be one of: 'Normal Findings', 'Minor Findings', or 'Critical Findings'.";
+      const userPrompt = promptInput.value.trim();
+
+      runButton.disabled = true;
+      runButton.textContent = "Analyzing...";
+      imageAnalysisLoadingIndicator.classList.remove('hidden');
+      imageReportOutput.innerHTML = `<p class="text-gray-500 italic p-2">Sending ${imageBase64Data.length} images to AI...</p>`;
+      copyButton.classList.add('hidden');
+      reportHeader.className = 'p-6 transition duration-300 bg-gray-100 text-gray-800';
+      severityDisplay.textContent = 'Severity: Processing...';
+
+      const apiParts = [{ text: userPrompt }];
+      imageBase64Data.forEach(img => {
+        apiParts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
+      });
+
+      const reportSchema = {
+        type: "OBJECT",
+        properties: {
+          impression: { type: "STRING" },
+          findings: { type: "STRING" },
+          recommendations: { type: "STRING" },
+          severity: { type: "STRING" },
+        },
+        required: ["impression", "findings", "recommendations", "severity"],
+        propertyOrdering: ["impression", "findings", "recommendations", "severity"]
+      };
+
+      const payload = {
+        contents: [{ role: "user", parts: apiParts }],
+        generationConfig: { responseMimeType: "application/json", responseSchema: reportSchema },
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      const maxRetries = 5;
+      let attempt = 0;
+      try {
+        while (attempt < maxRetries) {
+          attempt++;
+          try {
+            const resp = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (resp.status === 429 && attempt < maxRetries) {
+              await new Promise(r => setTimeout(r, getBackoffDelay(attempt)));
+              continue;
             }
+            if (!resp.ok) {
+              const body = await resp.text();
+              throw new Error(`API error ${resp.status}: ${body}`);
+            }
+            const data = await resp.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error("Empty AI response.");
+            const reportJson = JSON.parse(text);
 
-            reportHeader.className = `p-6 transition duration-300 ${severityClass}`;
-            severityDisplay.className = `text-sm font-bold ${severityTextColor}`;
-            severityDisplay.textContent = severityText;
+            // Render
+            function setSeverity(s) {
+              const lower = (s || '').toLowerCase();
+              if (lower.includes('normal')) return ['bg-green-100 text-green-800', 'text-green-700', 'Severity: Normal Findings'];
+              if (lower.includes('minor')) return ['bg-yellow-100 text-yellow-800', 'text-yellow-700', 'Severity: Minor Findings'];
+              if (lower.includes('critical')) return ['bg-red-100 text-red-800', 'text-red-700', 'Severity: Critical Findings'];
+              return ['bg-gray-100 text-gray-800', 'text-gray-700', 'Severity: Unclassified'];
+            }
+            const [hdrClass, txtClass, txt] = setSeverity(reportJson.severity);
+            reportHeader.className = `p-6 transition duration-300 ${hdrClass}`;
+            severityDisplay.className = `text-sm font-bold ${txtClass}`;
+            severityDisplay.textContent = txt;
 
-
+            const sections = [
+              { key: 'impression', title: 'Impression' },
+              { key: 'findings', title: 'Findings' },
+              { key: 'recommendations', title: 'Recommendations' },
+            ];
             let html = '';
-            const sections = [{ key: 'impression', title: 'Impression' }, { key: 'findings', title: 'Findings' }, { key: 'recommendations', title: 'Recommendations' }, ];
-
-            for (const section of sections) {
-                const content = reportJson[section.key] || "N/A";
-                html += `
+            for (const s of sections) {
+              const content = reportJson[s.key] || 'N/A';
+              html += `
                 <div class="report-section">
-                    <h4 class="text-lg font-bold text-blue-700 mb-2">${section.title}</h4>
-                    <p class="text-gray-800 whitespace-pre-wrap">${content}</p>
+                  <h4 class="text-lg font-bold text-blue-700 mb-2">${s.title}</h4>
+                  <p class="text-gray-800 whitespace-pre-wrap">${content}</p>
                 </div>`;
             }
-            return html;
+            imageReportOutput.innerHTML = html;
+            copyButton.dataset.reportText = JSON.stringify(reportJson, null, 2);
+            copyButton.classList.remove('hidden');
+            break;
+          } catch (err) {
+            if (attempt >= maxRetries) throw err;
+            await new Promise(r => setTimeout(r, getBackoffDelay(attempt)));
+          }
         }
+      } catch (e) {
+        imageReportOutput.innerHTML = `<p class="text-red-600 font-bold p-2">Error: ${e.message}</p>`;
+        displayError("Analysis Failed", e.message);
+      } finally {
+        runButton.disabled = false;
+        runButton.innerHTML = `Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>`;
+        imageAnalysisLoadingIndicator.classList.add('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
 
+    window.copyReport = function () {
+      const txt = copyButton.dataset.reportText;
+      if (!txt) return;
+      const ta = document.createElement('textarea');
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyButton.textContent = 'Copied!';
+      setTimeout(() => copyButton.textContent = 'Copy Report Text (JSON)', 1500);
+    }
 
-        /**
-         * UPDATED: Sends multiple images to the Gemini API for analysis.
-         */
-        window.runAnalysis = async function() {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
-                displayError("API Key Missing", "Please paste your Gemini API Key.");
-                return;
-            }
-            if (imageBase64Data.length === 0) {
-                displayError("No Images Selected", "Please upload one or more medical images.");
-                return;
-            }
+    // Knowledge Base
+    window.runKnowledgeBaseSearch = async function () {
+      if (!apiUrl.includes('http')) {
+        displayError("API URL Missing", "Please configure the API endpoint.");
+        return;
+      }
+      const q = document.getElementById('kbQuery').value.trim();
+      if (!q) {
+        displayError("Empty Query", "Please enter a medical query.");
+        return;
+      }
+      kbSearchButton.disabled = true;
+      kbSearchButton.textContent = "Searching...";
+      kbLoadingIndicator.classList.remove('hidden');
+      kbOutput.innerHTML = `<p class="text-gray-500 italic">Searching: "${q}"...</p>`;
 
-            const systemPrompt = "You are a specialized medical imaging AI. Analyze the uploaded series of images and the user's prompt to generate a single, consolidated, structured radiological report. The severity must be accurately determined based on the entire study and MUST be one of 'Normal Findings', 'Minor Findings', or 'Critical Findings'. Do not deviate from the JSON schema.";
-            const userPrompt = promptInput.value.trim();
-            const loadingIndicator = document.getElementById('imageAnalysisLoadingIndicator');
+      const systemPrompt = "You are a medical literature search assistant. Only answer medicine/biology/healthcare questions; otherwise politely decline.";
+      const payload = {
+        contents: [{ parts: [{ text: q }] }],
+        tools: [{ "googleSearch": {} }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
 
-            runButton.disabled = true;
-            runButton.innerHTML = "Analyzing...";
-            loadingIndicator.classList.remove('hidden');
-            imageReportOutput.innerHTML = `<p class="text-gray-500 italic p-4">Sending ${imageBase64Data.length} images and prompt to AI for structured report generation...</p>`;
-            document.getElementById('copyButton').classList.add('hidden');
-            reportHeader.className = 'p-6 transition duration-300 bg-gray-100 text-gray-800';
-            severityDisplay.textContent = 'Severity: Processing...';
-
-            // UPDATED: Construct the payload with multiple image parts
-            const apiParts = [
-                { text: userPrompt }
-            ];
-            imageBase64Data.forEach(imgData => {
-                apiParts.push({
-                    inlineData: {
-                        mimeType: imgData.mimeType,
-                        data: imgData.data
-                    }
-                });
-            });
-
-            const payload = {
-                contents: [{
-                    role: "user",
-                    parts: apiParts
-                }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: reportSchema,
-                },
-                systemInstruction: {
-                    parts: [{
-                        text: systemPrompt
-                    }]
-                }
-            };
-
-            const maxRetries = 5;
-            let attempt = 0;
-            try {
-                while (attempt < maxRetries) {
-                    attempt++;
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (response.status === 429 && attempt < maxRetries) {
-                            await new Promise(resolve => setTimeout(resolve, getBackoffDelay(attempt)));
-                            continue;
-                        }
-
-                        if (!response.ok) {
-                            const errorBody = await response.text();
-                            console.error("API Error Body:", response.status, errorBody);
-                            throw new Error(`API call failed with status ${response.status}`);
-                        }
-
-                        const result = await response.json();
-                        const candidate = result.candidates?.[0];
-
-                        if (candidate && candidate.content?.parts?.[0]?.text) {
-                            const jsonText = candidate.content.parts[0].text;
-                            const reportJson = JSON.parse(jsonText);
-                            imageReportOutput.innerHTML = formatReportHtml(reportJson);
-                            document.getElementById('copyButton').dataset.reportText = JSON.stringify(reportJson, null, 2);
-                            document.getElementById('copyButton').classList.remove('hidden');
-                        } else {
-                            throw new Error("Empty or malformed AI response received.");
-                        }
-                        break;
-                    } catch (error) {
-                        if (attempt >= maxRetries) throw error;
-                        await new Promise(resolve => setTimeout(resolve, getBackoffDelay(attempt)));
-                    }
-                }
-            } catch (error) {
-                console.error("Final API Error:", error);
-                imageReportOutput.innerHTML = `<p class="text-red-600 font-bold p-4">An error occurred: Failed to generate report. Check console for details.</p>`;
-                displayError("Analysis Failed", `Check console for details. Error: ${error.message}`);
-            } finally {
-                runButton.disabled = false;
-                runButton.innerHTML = `Run AI Analysis <i data-lucide="sparkles" class="w-4 h-4 ml-2 inline-block"></i>`;
-                loadingIndicator.classList.add('hidden');
-                lucide.createIcons();
-            }
+      try {
+        const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!resp.ok) throw new Error(`API error ${resp.status}`);
+        const data = await resp.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No answer.';
+        const atts = data?.candidates?.[0]?.groundingMetadata?.groundingAttributions || [];
+        let sources = atts.map(a => ({ uri: a.web?.uri, title: a.web?.title })).filter(s => s.uri && s.title);
+        let html = `<div>${text.replace(/\n/g, '<br>')}</div>`;
+        if (sources?.length) {
+          html += `<div class="mt-4 pt-4 border-t border-gray-300"><h5 class="font-semibold text-sm mb-2 text-indigo-700">Cited Sources</h5>`;
+          sources.forEach((s, i) => { html += `<p class="text-xs text-gray-600 mb-1"><a href="${s.uri}" target="_blank" class="text-blue-600 hover:underline">${i + 1}. ${s.title}</a></p>`; });
+          html += `</div>`;
         }
+        kbOutput.innerHTML = html;
+      } catch (e) {
+        kbOutput.innerHTML = `<p class="text-red-600 font-bold">Error: ${e.message}</p>`;
+        displayError("Search Failed", e.message);
+      } finally {
+        kbSearchButton.disabled = false;
+        kbSearchButton.innerHTML = `Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>`;
+        kbLoadingIndicator.classList.add('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
 
-        window.copyReport = function() {
-            const copyButton = document.getElementById('copyButton');
-            const reportText = copyButton.dataset.reportText;
-            if (!reportText) return;
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = reportText;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            try {
-                document.execCommand('copy');
-                copyButton.innerHTML = 'Copied!';
-                setTimeout(() => { copyButton.innerHTML = 'Copy Report Text (JSON)'; }, 2000);
-            } catch (err) {
-                console.error('Failed to copy text: ', err);
-                copyButton.innerHTML = 'Copy Failed!';
-            }
-            document.body.removeChild(tempTextArea);
+    window.draftCommunication = async function () {
+      if (!apiUrl.includes('http')) {
+        displayError("API URL Missing", "Please configure the API endpoint.");
+        return;
+      }
+      if (isRecording) stopDictation();
+
+      const draftRecipient = document.getElementById('draftRecipient').value;
+      const draftTopic = document.getElementById('draftTopic').value.trim();
+      const draftUrgency = document.getElementById('draftUrgency').value;
+      const draftFormat = document.getElementById('draftFormat').value;
+
+      if (!draftTopic) {
+        displayError("Missing Details", "Please provide the communication topic.");
+        return;
+      }
+
+      draftButton.disabled = true;
+      draftButton.textContent = "Drafting...";
+      draftLoadingIndicator.classList.remove('hidden');
+      draftOutput.innerHTML = `<p class="text-gray-500 italic">Generating ${draftFormat} for ${draftRecipient}...</p>`;
+
+      const systemPrompt = "You are a professional medical administrative assistant and report writer. Draft clear, concise, professional communications. Output only the body.";
+      const userQuery = `Draft an ${draftUrgency} ${draftFormat} for ${draftRecipient}. Details: "${draftTopic}". Use an appropriate tone.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        tools: [{ "googleSearch": {} }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      try {
+        const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!resp.ok) throw new Error(`API error ${resp.status}`);
+        const data = await resp.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No draft generated.';
+        draftOutput.innerHTML = text.replace(/\n/g, '<br>');
+      } catch (e) {
+        draftOutput.innerHTML = `<p class="text-red-600 font-bold">Error: ${e.message}</p>`;
+        displayError("Drafting Failed", e.message);
+      } finally {
+        draftButton.disabled = false;
+        draftButton.innerHTML = `Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>`;
+        draftLoadingIndicator.classList.add('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    // Initialization (single flow)
+    window.addEventListener('load', async () => {
+      // Icons
+      if (window.lucide) lucide.createIcons();
+
+      // Firebase (if used)
+      await initializeFirebase();
+
+      // Default prompt
+      promptInput.value = "Analyze the image series for radiological findings. Provide a structured JSON with fields: impression, findings, recommendations, and severity. Ensure severity reflects the overall study as 'Normal Findings', 'Minor Findings', or 'Critical Findings'.";
+
+      // Drag & drop
+      const dropArea = document.getElementById('dropArea');
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => dropArea.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); }, false));
+      dropArea.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files.length > 0) {
+          fileInput.files = e.dataTransfer.files;
+          fileInput.dispatchEvent(new Event('change'));
         }
+      });
 
-        // --- 5. MODULE 2: KNOWLEDGE BASE (Grounding/Search) ---
-        function formatKbOutput(text, sources) {
-            let html = `<div>${text.replace(/\n/g, '<br>')}</div>`;
-            if (sources && sources.length > 0) {
-                html += `<div class="mt-4 pt-4 border-t border-gray-300">`;
-                html += `<h5 class="font-semibold text-sm mb-2 text-indigo-700">Cited Sources</h5>`;
-                sources.forEach((s, index) => {
-                    html += `<p class="text-xs text-gray-600 mb-1">
-                        <a href="${s.uri}" target="_blank" class="text-blue-600 hover:underline">${index + 1}. ${s.title}</a>
-                    </p>`;
-                });
-                html += `</div>`;
-            }
-            return html;
-        }
+      // Navigation delegation
+      if (navContainer) {
+        navContainer.addEventListener('click', (e) => {
+          const item = e.target.closest('.nav-item');
+          if (!item) return;
+          const view = item.getAttribute('data-view');
+          if (!view) return;
+          switchView(view);
+          // Close drawer on mobile
+          const drawer = document.getElementById('mobileDrawer');
+          if (window.innerWidth < 1024 && drawer) drawer.classList.add('-translate-x-full');
+        });
+      }
 
-        window.runKnowledgeBaseSearch = async function() {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
-                displayError("API Key Missing", "Please paste your Gemini API Key.");
-                return;
-            }
+      // Dictation icon
+      dictationButton.innerHTML = micIconSVG;
+      handleDraftRecipientChange(draftRecipientSelect.value);
 
-            const kbQuery = document.getElementById('kbQuery').value.trim();
-            if (!kbQuery) {
-                displayError("Empty Query", "Please enter a medical query to search.");
-                return;
-            }
+      // Default view
+      switchView('image-analysis');
+    });
 
-            const kbSearchButton = document.getElementById('kbSearchButton');
-            const kbLoadingIndicator = document.getElementById('kbLoadingIndicator');
-            const kbOutput = document.getElementById('kbOutput');
-
-            kbSearchButton.disabled = true;
-            kbSearchButton.innerHTML = "Searching...";
-            kbLoadingIndicator.classList.remove('hidden');
-            kbOutput.innerHTML = `<p class="text-gray-500 italic">Searching medical literature for "${kbQuery}"...</p>`;
-
-            const systemPrompt = "You are a specialized medical literature search engine. You MUST only answer questions related to medicine, biology, or healthcare. If the query is non-medical (e.g., 'what is the capital of France'), you MUST politely decline and state that you are restricted to medical topics.";
-            const payload = {
-                contents: [{ parts: [{ text: kbQuery }] }],
-                tools: [{ "googleSearch": {} }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-
-            // API Call logic remains the same as previous versions...
-            try {
-                 const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    const text = candidate.content.parts[0].text;
-                    let sources = candidate.groundingMetadata?.groundingAttributions?.map(attr => ({ uri: attr.web?.uri, title: attr.web?.title })).filter(s => s.uri && s.title);
-                    kbOutput.innerHTML = formatKbOutput(text, sources);
-                } else {
-                    kbOutput.innerHTML = `<p class="text-red-600 font-bold">Error: AI did not return a valid response.</p>`;
-                }
-            } catch (error) {
-                 console.error("KB Search API Error:", error);
-                kbOutput.innerHTML = `<p class="text-red-600 font-bold">An error occurred. Check console for details.</p>`;
-                displayError("Search Failed", `Error: ${error.message}`);
-            } finally {
-                kbSearchButton.disabled = false;
-                kbSearchButton.innerHTML = `Search Medical Knowledge <i data-lucide="search" class="w-4 h-4 ml-2 inline-block"></i>`;
-                kbLoadingIndicator.classList.add('hidden');
-                lucide.createIcons();
-            }
-        }
-
-        // --- 6. MODULE 3: COMMUNICATION DRAFTING ---
-        const draftTopicTextarea = document.getElementById('draftTopic');
-        const dictationBanner = document.getElementById('dictationBanner');
-        const micIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
-        const stopIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>`;
-
-        window.toggleDictation = function() {
-            if (isRecording) {
-                stopDictation();
-            } else {
-                startDictation();
-            }
-        };
-
-        function startDictation() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                displayError("Browser Not Supported", "Speech recognition is not available in this browser.");
-                return;
-            }
-
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-            finalTranscript = draftTopicTextarea.value;
-
-            recognition.onstart = () => {
-                isRecording = true;
-                dictationButton.innerHTML = stopIconSVG;
-                dictationButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                dictationButton.classList.add('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
-            };
-
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript + ' ';
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
-                }
-                draftTopicTextarea.value = finalTranscript + interimTranscript;
-                draftTopicTextarea.scrollTop = draftTopicTextarea.scrollHeight;
-            };
-
-            recognition.onerror = (event) => {
-                console.error("Speech Recognition Error:", event.error);
-                displayError("Dictation Error", `Error: ${event.error}. Please try again.`);
-                stopDictation();
-            };
-
-            recognition.onend = () => {
-                if (isRecording) stopDictation();
-            };
-
-            recognition.start();
-        }
-
-        function stopDictation() {
-            if (recognition) recognition.stop();
-            isRecording = false;
-            dictationButton.innerHTML = micIconSVG;
-            dictationButton.classList.remove('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
-            dictationButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        }
-
-        window.draftCommunication = async function() {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE") {
-                displayError("API Key Missing", "Please paste your Gemini API Key.");
-                return;
-            }
-            if (isRecording) stopDictation();
-            const draftRecipient = document.getElementById('draftRecipient').value;
-            const draftTopic = document.getElementById('draftTopic').value.trim();
-            const draftUrgency = document.getElementById('draftUrgency').value;
-            const draftFormat = document.getElementById('draftFormat').value;
-
-            if (!draftTopic) {
-                displayError("Missing Details", "Please provide the communication topic.");
-                return;
-            }
-
-            const draftButton = document.getElementById('draftButton');
-            const draftLoadingIndicator = document.getElementById('draftLoadingIndicator');
-            const draftOutput = document.getElementById('draftOutput');
-
-            draftButton.disabled = true;
-            draftButton.innerHTML = "Drafting...";
-            draftLoadingIndicator.classList.remove('hidden');
-            draftOutput.innerHTML = `<p class="text-gray-500 italic">Generating draft...</p>`;
-            
-            const systemPrompt = "You are a professional medical administrative assistant and report writer. Your task is to draft a clear, concise, and professional communication or report. Maintain a formal but helpful tone. Only output the letter/email/report content, no greetings or explanations outside the main body.";
-            const userQuery = `Draft an ${draftUrgency} ${draftFormat} for the type: ${draftRecipient}. The main topic and details are: "${draftTopic}". Ensure the tone is appropriate for the recipient and format.`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "googleSearch": {} }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`API call failed with status ${response.status}`);
-                const result = await response.json();
-                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (responseText) {
-                    draftOutput.innerHTML = responseText.replace(/\n/g, '<br>');
-                } else {
-                    draftOutput.innerHTML = `<p class="text-red-600 font-bold">Error: AI did not return a valid response.</p>`;
-                }
-            } catch (error) {
-                console.error("Drafting API Error:", error);
-                draftOutput.innerHTML = `<p class="text-red-600 font-bold">Failed to generate draft. Check console for details.</p>`;
-                displayError("Drafting Failed", `Error: ${error.message}`);
-            } finally {
-                draftButton.disabled = false;
-                draftButton.innerHTML = `Generate Draft <i data-lucide="file-text" class="w-4 h-4 ml-2 inline-block"></i>`;
-                draftLoadingIndicator.classList.add('hidden');
-                lucide.createIcons();
-            }
-        }
-
-
-        // --- 7. INITIALIZATION ON LOAD ---
-        window.onload = function() {
-            initializeFirebase();
-            lucide.createIcons();
-            switchView('image-analysis');
-            navContainer.addEventListener('click', (e) => {
-                const target = e.target.closest('.nav-item');
-                if (target) switchView(target.getAttribute('data-view'));
-            });
-
-            // UPDATED: Default prompt for multi-image analysis
-            promptInput.value = "Analyze the following image series for radiological findings. Provide a single, consolidated, structured JSON output with fields: impression, findings, recommendations, and severity. Ensure the severity is accurately classified based on the entire study as 'Normal Findings', 'Minor Findings', or 'Critical Findings'.";
-
-            const dropArea = document.getElementById('dropArea');
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false));
-            dropArea.addEventListener('drop', (e) => {
-                if (e.dataTransfer.files.length > 0) {
-                    fileInput.files = e.dataTransfer.files;
-                    fileInput.dispatchEvent(new Event('change'));
-                }
-            }, false);
-
-            handleDraftRecipientChange(draftRecipientSelect.value);
-            dictationButton.innerHTML = micIconSVG;
-        };
-    </script>
+    // Mobile drawer: separate load-safe binding (does not override onload)
+    window.addEventListener('load', () => {
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileDrawer = document.getElementById('mobileDrawer');
+      if (mobileMenuBtn && mobileDrawer) {
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileDrawer.classList.toggle('-translate-x-full');
+        });
+        window.addEventListener('resize', () => {
+          if (window.innerWidth >= 1024) mobileDrawer.classList.remove('-translate-x-full');
+          else mobileDrawer.classList.add('-translate-x-full');
+        });
+      }
+    });
+  </script>
 </body>
-
 </html>
