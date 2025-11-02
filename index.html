@@ -304,7 +304,7 @@
     // IMPORTANT: Replace the direct Gemini API call with your backend proxy in production.
     // const apiUrl = 'http://localhost:3000/api/generate';
     const GEMINI_API_KEY = "AIzaSyDc7nVJemQWH6dnun8jQjucGekruAMVVsc"; // Remove when proxying through backend.
-    const MODEL_NAME = "gemini-2.5-flash-live";
+    const MODEL_NAME = "gemini-2.0-flash-preview-image-generation";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
 
     // Minimal placeholders for Firebase (optional)
